@@ -32,18 +32,74 @@ private struct WaitingView: View {
     @Environment(AppState.self) private var appState
 
     var body: some View {
-        @Bindable var appState = appState
+        // Every click on a segment opens the system picker for that mode.
+        let mode = Binding(
+            get: { appState.captureMode },
+            set: { appState.chooseSource($0) }
+        )
 
         VStack(spacing: 12) {
             QRCodeView(content: appState.viewerURL)
                 .frame(width: 200, height: 200)
 
-            Picker("Kaynak", selection: $appState.captureMode) {
+            Picker("Kaynak", selection: mode) {
                 Text("Tüm ekran").tag(CaptureMode.fullScreen)
                 Text("Pencere seç").tag(CaptureMode.window)
             }
             .pickerStyle(.segmented)
             .labelsHidden()
+
+            CaptureStatusView()
+        }
+    }
+}
+
+/// Capture status below the source picker. The live preview is a
+/// temporary test aid until frames reach the phone.
+private struct CaptureStatusView: View {
+    @Environment(AppState.self) private var appState
+
+    var body: some View {
+        switch appState.captureState {
+        case .idle:
+            EmptyView()
+
+        case .capturing(let source):
+            VStack(spacing: 6) {
+                PreviewView(renderer: appState.preview)
+                    .aspectRatio(source.size, contentMode: .fit)
+                    .frame(maxHeight: 140)
+                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+
+                HStack {
+                    Text("\(Int(source.size.width))×\(Int(source.size.height))")
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Button("Değiştir") { appState.chooseSource(appState.captureMode) }
+                    Button("Durdur") { appState.stopCapture() }
+                }
+                .font(.caption)
+                .buttonStyle(.link)
+            }
+
+        case .permissionDenied:
+            VStack(spacing: 6) {
+                Text("AirGlass'ın ekranı görebilmesi için Ekran Kaydı izni gerekiyor. İzni verdikten sonra uygulamayı yeniden açın.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                Button("Sistem Ayarları'nı aç") { appState.openScreenRecordingSettings() }
+                    .controlSize(.small)
+            }
+
+        case .failed(let message):
+            Text(message)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 }
