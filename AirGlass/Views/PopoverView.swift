@@ -39,8 +39,15 @@ private struct WaitingView: View {
         )
 
         VStack(spacing: 12) {
-            QRCodeView(content: appState.viewerURL)
-                .frame(width: 200, height: 200)
+            Group {
+                if let url = appState.viewerURL {
+                    QRCodeView(content: url)
+                        .help(url)
+                } else {
+                    QRPlaceholderView(message: appState.unavailableReason)
+                }
+            }
+            .frame(width: 200, height: 200)
 
             Picker("Kaynak", selection: mode) {
                 Text("Tüm ekran").tag(CaptureMode.fullScreen)
@@ -51,6 +58,28 @@ private struct WaitingView: View {
 
             CaptureStatusView()
         }
+    }
+}
+
+/// Stands in for the QR code while the server starts or no network is up.
+private struct QRPlaceholderView: View {
+    let message: String?
+
+    var body: some View {
+        RoundedRectangle(cornerRadius: 10, style: .continuous)
+            .fill(.quaternary)
+            .overlay {
+                if let message {
+                    Text(message)
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding()
+                } else {
+                    ProgressView()
+                        .controlSize(.small)
+                }
+            }
     }
 }
 

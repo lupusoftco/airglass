@@ -20,6 +20,10 @@ targets:
       - path: AirGlass
         excludes:
           - "Info.plist"
+      # Phone-side viewer page, copied as Resources/Viewer.
+      - path: Viewer
+        type: folder
+        buildPhase: resources
     # Signing and bundle ID live in the xcconfig so they can be overridden
     # per developer via the git-ignored Config/Local.xcconfig.
     configFiles:
