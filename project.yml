@@ -12,6 +12,11 @@ settings:
     MARKETING_VERSION: "0.1.0"
     CURRENT_PROJECT_VERSION: "1"
 
+packages:
+  WebRTC:
+    url: https://github.com/stasel/WebRTC
+    exactVersion: 154.0.0
+
 targets:
   AirGlass:
     type: application
@@ -24,6 +29,8 @@ targets:
       - path: Viewer
         type: folder
         buildPhase: resources
+    dependencies:
+      - package: WebRTC
     # Signing and bundle ID live in the xcconfig so they can be overridden
     # per developer via the git-ignored Config/Local.xcconfig.
     configFiles:

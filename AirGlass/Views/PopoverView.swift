@@ -39,15 +39,19 @@ private struct WaitingView: View {
         )
 
         VStack(spacing: 12) {
-            Group {
-                if let url = appState.viewerURL {
-                    QRCodeView(content: url)
-                        .help(url)
-                } else {
-                    QRPlaceholderView(message: appState.unavailableReason)
+            VStack(spacing: 6) {
+                Group {
+                    if let url = appState.viewerURL {
+                        QRCodeView(content: url)
+                            .help(url)
+                    } else {
+                        QRPlaceholderView(message: appState.unavailableReason)
+                    }
                 }
+                .frame(width: 200, height: 200)
+
+                CopyLinkButton()
             }
-            .frame(width: 200, height: 200)
 
             Picker("Kaynak", selection: mode) {
                 Text("Tüm ekran").tag(CaptureMode.fullScreen)
@@ -58,6 +62,37 @@ private struct WaitingView: View {
 
             CaptureStatusView()
         }
+    }
+}
+
+/// Copies the viewer link (for opening it on a device without a camera).
+private struct CopyLinkButton: View {
+    @Environment(AppState.self) private var appState
+    @State private var didCopy = false
+    @State private var resetTask: Task<Void, Never>?
+
+    var body: some View {
+        Button {
+            appState.copyViewerURL()
+            didCopy = true
+            resetTask?.cancel()
+            resetTask = Task {
+                try? await Task.sleep(for: .seconds(1.5))
+                guard !Task.isCancelled else { return }
+                didCopy = false
+            }
+        } label: {
+            if didCopy {
+                Text("Kopyalandı ✓")
+            } else {
+                Label("Linki kopyala", systemImage: "doc.on.doc")
+            }
+        }
+        .buttonStyle(.borderless)
+        .font(.caption)
+        .foregroundStyle(didCopy ? .secondary : .primary)
+        .disabled(appState.viewerURL == nil)
+        .animation(.easeInOut(duration: 0.15), value: didCopy)
     }
 }
 
@@ -83,8 +118,7 @@ private struct QRPlaceholderView: View {
     }
 }
 
-/// Capture status below the source picker. The live preview is a
-/// temporary test aid until frames reach the phone.
+/// The selected screen or window, below the source picker.
 private struct CaptureStatusView: View {
     @Environment(AppState.self) private var appState
 
@@ -94,23 +128,19 @@ private struct CaptureStatusView: View {
             EmptyView()
 
         case .capturing(let source):
-            VStack(spacing: 6) {
-                PreviewView(renderer: appState.preview)
-                    .aspectRatio(source.size, contentMode: .fit)
-                    .frame(maxHeight: 140)
-                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-
-                HStack {
-                    Text("\(Int(source.size.width))×\(Int(source.size.height))")
-                        .monospacedDigit()
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    Button("Değiştir") { appState.chooseSource(appState.captureMode) }
-                    Button("Durdur") { appState.stopCapture() }
-                }
-                .font(.caption)
-                .buttonStyle(.link)
+            HStack(spacing: 6) {
+                Image(systemName: source.isWindow ? "macwindow" : "display")
+                    .foregroundStyle(.secondary)
+                Text(source.name)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .help(source.name)
+                Spacer(minLength: 4)
+                Button("Değiştir") { appState.chooseSource(appState.captureMode) }
+                Button("Durdur") { appState.stopCapture() }
             }
+            .font(.caption)
+            .buttonStyle(.link)
 
         case .permissionDenied:
             VStack(spacing: 6) {

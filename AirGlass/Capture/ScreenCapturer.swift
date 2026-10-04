@@ -1,3 +1,4 @@
+import AppKit
 import CoreGraphics
 import CoreMedia
 import Foundation
@@ -11,6 +12,8 @@ protocol VideoFrameConsumer: AnyObject {
 
 struct CaptureSource: Equatable {
     var isWindow: Bool
+    /// Display name, or "App — Window title".
+    var name: String
     /// Output size in pixels.
     var size: CGSize
 }
@@ -24,7 +27,7 @@ enum CaptureState: Equatable {
 
 /// Owns the ScreenCaptureKit stream. The user picks what to share with the
 /// system `SCContentSharingPicker`; frames fan out to registered consumers
-/// (the temporary preview now, the WebRTC video source later).
+/// (the WebRTC video pipeline).
 @MainActor
 final class ScreenCapturer: NSObject {
     /// Long edge cap; keeps the later H.264 encode cheap and phone-friendly.
@@ -79,6 +82,7 @@ final class ScreenCapturer: NSObject {
         let configuration = Self.configuration(for: filter)
         let source = CaptureSource(
             isWindow: filter.style == .window,
+            name: Self.sourceName(for: filter),
             size: CGSize(width: configuration.width, height: configuration.height)
         )
 
@@ -117,6 +121,28 @@ final class ScreenCapturer: NSObject {
         }
     }
 
+    private static func sourceName(for filter: SCContentFilter) -> String {
+        if #available(macOS 15.2, *) {
+            if filter.style == .window, let window = filter.includedWindows.first {
+                let parts = [window.owningApplication?.applicationName, window.title]
+                    .compactMap { $0 }
+                    .filter { !$0.isEmpty }
+                if !parts.isEmpty { return parts.joined(separator: " — ") }
+            }
+            if filter.style == .display, let display = filter.includedDisplays.first,
+               let screen = NSScreen.screens.first(where: { $0.displayID == display.displayID }) {
+                return screen.localizedName
+            }
+        }
+        if filter.style == .display {
+            // macOS 14: identify the display by its size.
+            let matches = NSScreen.screens.filter { $0.frame.size == filter.contentRect.size }
+            if matches.count == 1 { return matches[0].localizedName }
+            return "Ekran"
+        }
+        return "Pencere"
+    }
+
     private static func configuration(for filter: SCContentFilter) -> SCStreamConfiguration {
         let scale = CGFloat(filter.pointPixelScale)
         var width = filter.contentRect.width * scale
@@ -131,7 +157,8 @@ final class ScreenCapturer: NSObject {
         configuration.height = max(2, Int(height) & ~1)
         configuration.minimumFrameInterval = CMTime(value: 1, timescale: framesPerSecond)
         configuration.pixelFormat = kCVPixelFormatType_420YpCbCr8BiPlanarFullRange
-        configuration.queueDepth = 5
+        // One surface may be held back for repeating a still screen.
+        configuration.queueDepth = 6
         configuration.showsCursor = true
         return configuration
     }
@@ -215,5 +242,11 @@ private final class ConsumerRegistry: @unchecked Sendable {
     func forEach(_ body: (VideoFrameConsumer) -> Void) {
         let current = lock.withLock { entries.compactMap(\.consumer) }
         current.forEach(body)
+    }
+}
+
+private extension NSScreen {
+    var displayID: CGDirectDisplayID? {
+        (deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?.uint32Value
     }
 }

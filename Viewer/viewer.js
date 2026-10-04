@@ -2,6 +2,7 @@
 
 (() => {
   const statusEl = document.getElementById("status");
+  const video = document.getElementById("video");
 
   const setStatus = (text) => {
     statusEl.textContent = text || "";
@@ -20,12 +21,73 @@
   }
 
   const socket = new WebSocket(`ws://${location.host}/ws`);
-  let welcomed = false;
+  const send = (message) => {
+    if (socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify(message));
+  };
 
-  socket.addEventListener("open", () => {
-    socket.send(JSON.stringify({ type: "hello", token }));
+  // Local network only: no STUN/TURN servers, host candidates only.
+  const peer = new RTCPeerConnection({ iceServers: [] });
+  let welcomed = false;
+  let ended = false;
+
+  const end = (text) => {
+    if (ended) return;
+    ended = true;
+    peer.close();
+    socket.close();
+    video.srcObject = null;
+    setStatus(text);
+  };
+
+  peer.addEventListener("track", (event) => {
+    video.srcObject = event.streams[0] || new MediaStream([event.track]);
+    video.play().catch(() => {});
   });
 
+  peer.addEventListener("icecandidate", (event) => {
+    if (!event.candidate || !event.candidate.candidate) return;
+    send({
+      type: "candidate",
+      candidate: event.candidate.candidate,
+      sdpMid: event.candidate.sdpMid,
+      sdpMLineIndex: event.candidate.sdpMLineIndex,
+    });
+  });
+
+  peer.addEventListener("connectionstatechange", () => {
+    if (peer.connectionState === "failed") end("Bağlantı kesildi");
+  });
+
+  video.addEventListener("playing", () => setStatus(""));
+
+  const handle = async (message) => {
+    switch (message.type) {
+      case "welcome":
+        welcomed = true;
+        setStatus("Bağlandı. Görüntü bekleniyor…");
+        break;
+      case "offer":
+        await peer.setRemoteDescription({ type: "offer", sdp: message.sdp });
+        await peer.setLocalDescription(await peer.createAnswer());
+        send({ type: "answer", sdp: peer.localDescription.sdp });
+        break;
+      case "candidate":
+        await peer.addIceCandidate({
+          candidate: message.candidate,
+          sdpMid: message.sdpMid || null,
+          sdpMLineIndex: message.sdpMLineIndex,
+        });
+        break;
+    }
+  };
+
+  socket.addEventListener("open", () => {
+    send({ type: "hello", token });
+  });
+
+  // Handle messages strictly in order: a candidate must not be applied
+  // before the offer it belongs to.
+  let queue = Promise.resolve();
   socket.addEventListener("message", (event) => {
     let message;
     try {
@@ -33,13 +95,10 @@
     } catch {
       return;
     }
-    if (message.type === "welcome") {
-      welcomed = true;
-      setStatus("Bağlandı. Görüntü bekleniyor…");
-    }
+    queue = queue.then(() => handle(message)).catch(() => {});
   });
 
   socket.addEventListener("close", () => {
-    setStatus(welcomed ? "Bağlantı kesildi" : "Bağlanılamadı. QR kodu yeniden okutun.");
+    end(welcomed ? "Bağlantı kesildi" : "Bağlanılamadı. QR kodu yeniden okutun.");
   });
 })();

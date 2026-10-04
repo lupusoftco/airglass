@@ -30,11 +30,11 @@ final class AppState {
     private(set) var token: String
 
     @ObservationIgnored let capturer = ScreenCapturer()
-    @ObservationIgnored let preview = PreviewRenderer()
+    @ObservationIgnored private let pipeline = VideoPipeline()
     @ObservationIgnored private let tokens: TokenStore
     @ObservationIgnored private let server: LocalServer
     @ObservationIgnored private let addressMonitor = LocalAddressMonitor()
-    @ObservationIgnored private var viewer: ViewerChannel?
+    @ObservationIgnored private var session: PeerSession?
 
     var isStreaming: Bool {
         if case .connected = connection { return true }
@@ -62,9 +62,11 @@ final class AppState {
         server = LocalServer(tokens: tokens)
 
         capturer.onStateChange = { [weak self] state in
-            self?.captureState = state
+            guard let self else { return }
+            self.captureState = state
+            if case .capturing = state {} else { self.pipeline.clearLastFrame() }
         }
-        capturer.addConsumer(preview)
+        capturer.addConsumer(pipeline)
 
         // Both callbacks are delivered on the main queue.
         server.onStateChange = { [weak self] state in
@@ -82,15 +84,28 @@ final class AppState {
     }
 
     private func viewerConnected(_ channel: ViewerChannel) {
-        // Milestone 3 only proves the handshake; streaming and the
-        // one-viewer / one-time-token rules follow in milestones 4 and 5.
-        viewer = channel
-        channel.onClose = { [weak self, weak channel] in
+        // The one-viewer / one-time-token rules arrive in milestone 5; for
+        // now a newer viewer simply replaces the previous one.
+        session?.end()
+
+        guard let session = PeerSession(channel: channel, pipeline: pipeline) else {
+            channel.close()
+            return
+        }
+        session.onEnd = { [weak self, weak session] in
             MainActor.assumeIsolated {
-                guard let self, self.viewer === channel else { return }
-                self.viewer = nil
+                guard let self, self.session === session else { return }
+                self.session = nil
             }
         }
+        self.session = session
+        session.start()
+    }
+
+    func copyViewerURL() {
+        guard let viewerURL else { return }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(viewerURL, forType: .string)
     }
 
     /// Opens the system content picker for the given mode.
