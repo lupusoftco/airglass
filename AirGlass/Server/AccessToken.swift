@@ -37,7 +37,8 @@ final class TokenStore: @unchecked Sendable {
         return difference == 0
     }
 
-    private static func generate() -> String {
+    /// A fresh 192-bit random value, URL-safe base64.
+    static func generate() -> String {
         var bytes = [UInt8](repeating: 0, count: byteCount)
         let status = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
         precondition(status == errSecSuccess, "Secure random generator unavailable")

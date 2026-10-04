@@ -2,7 +2,7 @@ import Foundation
 import WebRTC
 
 /// One viewer's WebRTC connection. The Mac offers a send-only video track;
-/// SDP and ICE candidates travel over the viewer's WebSocket.
+/// SDP and ICE candidates travel over the viewer's HTTP signaling channel.
 /// Use from the main thread only.
 final class PeerSession: NSObject {
     /// Generous for a LAN; WebRTC still adapts down on a weak link.

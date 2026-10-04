@@ -44,22 +44,12 @@
     return `${typ >= 0 ? fields[typ + 1] : "?"} ${fields[4]}:${fields[5]} ${fields[2]}`;
   };
 
+  const describe = (message) =>
+    `${message.type}${message.type === "candidate" ? ` ${describeCandidate(message.candidate || "")}` : ""}`;
+
   log(`UA: ${navigator.userAgent}`);
-  log(`secureContext=${window.isSecureContext} RTCPeerConnection=${typeof window.RTCPeerConnection} onLine=${navigator.onLine} visibility=${document.visibilityState}`);
-
+  log(`secureContext=${window.isSecureContext} RTCPeerConnection=${typeof window.RTCPeerConnection}`);
   document.addEventListener("visibilitychange", () => log(`visibility → ${document.visibilityState}`));
-  window.addEventListener("pagehide", (event) => log(`pagehide persisted=${event.persisted}`));
-  window.addEventListener("pageshow", (event) => log(`pageshow persisted=${event.persisted}`));
-  window.addEventListener("online", () => log("online"));
-  window.addEventListener("offline", () => log("offline"));
-
-  // Does a script-initiated HTTP request to the same server get through?
-  if (debug) {
-    const started = performance.now();
-    fetch(`/viewer.css?probe=${Date.now()}`, { cache: "no-store" })
-      .then((response) => log(`fetch probe: HTTP ${response.status} ${Math.round(performance.now() - started)} ms`))
-      .catch((error) => log(`fetch probe HATA: ${error.name}: ${error.message} ${Math.round(performance.now() - started)} ms`));
-  }
 
   // --- UI ----------------------------------------------------------------
 
@@ -77,59 +67,82 @@
     return;
   }
 
-  // --- Signaling -----------------------------------------------------------
+  // --- Signaling over plain HTTP -----------------------------------------
+  //
+  // POST /signal/hello {token} → {session}
+  // POST /signal/send  {message}           (our messages, strictly in order)
+  // GET  /signal/poll  → [messages]        (long poll for the Mac's messages)
+  // POST /signal/bye                       (page closed)
 
-  const socketURL = `ws://${location.host}/ws`;
-  log(`new WebSocket(${socketURL})`);
-  const socketStarted = performance.now();
-  const socket = new WebSocket(socketURL);
-  log(`WebSocket nesnesi oluştu, readyState=${socket.readyState}`);
-
-  // Report the handshake's progress while it is pending.
-  const readyStateNames = ["CONNECTING", "OPEN", "CLOSING", "CLOSED"];
-  const elapsed = () => `${Math.round(performance.now() - socketStarted)} ms`;
-  const watchdog = setInterval(() => {
-    log(`WS hâlâ ${readyStateNames[socket.readyState]} (${elapsed()})`);
-    if (socket.readyState !== WebSocket.CONNECTING) clearInterval(watchdog);
-  }, 2000);
-  setTimeout(() => clearInterval(watchdog), 30000);
+  let session = null;
   let peer = null;
-  let welcomed = false;
   let ended = false;
 
-  const send = (message) => {
-    if (socket.readyState !== WebSocket.OPEN) {
-      log(`→ ${message.type} GÖNDERİLEMEDİ (WS readyState=${socket.readyState})`);
-      return;
-    }
-    log(`→ ${message.type}${message.type === "candidate" ? ` ${describeCandidate(message.candidate)}` : ""}`);
-    socket.send(JSON.stringify(message));
-  };
+  const request = (method, path, body, options = {}) =>
+    fetch(path, {
+      method,
+      cache: "no-store",
+      headers: {
+        ...(body ? { "Content-Type": "application/json" } : {}),
+        ...(session ? { "X-AirGlass-Session": session } : {}),
+      },
+      body: body ? JSON.stringify(body) : undefined,
+      ...options,
+    });
 
   const end = (text) => {
     if (ended) return;
     ended = true;
+    log(`Bitti: ${text}`);
     if (peer) peer.close();
-    socket.close();
     video.srcObject = null;
     setStatus(text);
   };
 
-  // Socket listeners are registered first so the handshake works even if
-  // anything WebRTC-related fails later.
-  socket.addEventListener("open", () => {
-    log(`WS open (${elapsed()})`);
-    log("→ hello");
-    socket.send(JSON.stringify({ type: "hello", token }));
-  });
+  // Sends are chained so the Mac receives them in order (an answer must
+  // arrive before the candidates that follow it).
+  let sendChain = Promise.resolve();
+  const send = (message) => {
+    sendChain = sendChain.then(async () => {
+      if (ended) return;
+      log(`→ ${describe(message)}`);
+      const response = await request("POST", "/signal/send", message);
+      if (!response.ok) {
+        log(`→ ${message.type} reddedildi: HTTP ${response.status}`);
+        end("Bağlantı kesildi");
+      }
+    }).catch((error) => {
+      log(`→ ${message.type} gönderilemedi: ${error.name}: ${error.message}`);
+      end("Bağlantı kesildi");
+    });
+  };
 
-  socket.addEventListener("error", () => log(`WS error (${elapsed()})`));
-
-  socket.addEventListener("close", (event) => {
-    clearInterval(watchdog);
-    log(`WS close code=${event.code} reason="${event.reason}" clean=${event.wasClean} (${elapsed()})`);
-    end(welcomed ? "Bağlantı kesildi" : "Bağlanılamadı. QR kodu yeniden okutun.");
-  });
+  const poll = async () => {
+    let failures = 0;
+    while (!ended) {
+      let response;
+      try {
+        response = await request("GET", "/signal/poll");
+      } catch (error) {
+        // A dropped long poll is not fatal; give up after a few in a row.
+        failures += 1;
+        log(`poll ağ hatası (${failures}): ${error.name}: ${error.message}`);
+        if (failures >= 3) return end("Bağlantı kesildi");
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        continue;
+      }
+      failures = 0;
+      if (!response.ok) {
+        log(`poll: HTTP ${response.status}`);
+        return end("Bağlantı kesildi");
+      }
+      const messages = await response.json();
+      for (const message of messages) {
+        log(`← ${describe(message)}`);
+        enqueue(message);
+      }
+    }
+  };
 
   // --- WebRTC --------------------------------------------------------------
 
@@ -174,10 +187,6 @@
 
   const handle = async (message) => {
     switch (message.type) {
-      case "welcome":
-        welcomed = true;
-        setStatus("Bağlandı. Görüntü bekleniyor…");
-        break;
       case "offer":
         if (!peer) peer = createPeer();
         await peer.setRemoteDescription({ type: "offer", sdp: message.sdp });
@@ -195,23 +204,43 @@
     }
   };
 
-  // Handle messages strictly in order: a candidate must not be applied
-  // before the offer it belongs to.
-  let queue = Promise.resolve();
-  socket.addEventListener("message", (event) => {
-    let message;
-    try {
-      message = JSON.parse(event.data);
-    } catch {
-      log(`← JSON olmayan mesaj (${String(event.data).length} bayt)`);
-      return;
-    }
-    log(`← ${message.type}${message.type === "candidate" ? ` ${describeCandidate(message.candidate || "")}` : ""}`);
-    queue = queue
+  // Handle the Mac's messages strictly in order: a candidate must not be
+  // applied before the offer it belongs to.
+  let handleChain = Promise.resolve();
+  const enqueue = (message) => {
+    handleChain = handleChain
       .then(() => handle(message))
       .catch((error) => {
         log(`${message.type} işlenemedi: ${error && error.name}: ${error && error.message}`);
         if (message.type === "offer") end("Bu tarayıcı görüntüyü açamadı.");
       });
+  };
+
+  // Tell the Mac right away when the page goes away; keepalive lets the
+  // request outlive the page.
+  window.addEventListener("pagehide", () => {
+    if (!session || ended) return;
+    request("POST", "/signal/bye", null, { keepalive: true }).catch(() => {});
   });
+
+  // --- Start ---------------------------------------------------------------
+
+  (async () => {
+    log("→ hello");
+    let response;
+    try {
+      response = await request("POST", "/signal/hello", { token });
+    } catch (error) {
+      log(`hello ağ hatası: ${error.name}: ${error.message}`);
+      return end("Bağlanılamadı. QR kodu yeniden okutun.");
+    }
+    if (!response.ok) {
+      log(`hello reddedildi: HTTP ${response.status}`);
+      return end("Bağlanılamadı. QR kodu yeniden okutun.");
+    }
+    session = (await response.json()).session;
+    log("← hello kabul edildi");
+    setStatus("Bağlandı. Görüntü bekleniyor…");
+    poll();
+  })();
 })();
