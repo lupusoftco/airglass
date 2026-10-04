@@ -29,6 +29,6 @@
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>AirGlass, ekranınızı aynı ağdaki telefonunuza yansıtmak için yerel ağı kullanır.</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>MIT License</string>
+	<string>© 2026 Lupusoft</string>
 </dict>
 </plist>

@@ -22,7 +22,15 @@ struct PopoverView: View {
             }
 
             SeparatorLine()
-            QuitRow()
+            VStack(spacing: 0) {
+                MenuRow("AirGlass Hakkında") {
+                    AboutPanel.show()
+                }
+                MenuRow("Çıkış", shortcut: "⌘Q") {
+                    NSApplication.shared.terminate(nil)
+                }
+                .keyboardShortcut("q")
+            }
         }
         .padding(EdgeInsets(top: 10, leading: 8, bottom: 6, trailing: 8))
         .frame(width: 260)
@@ -439,22 +447,32 @@ private extension View {
     }
 }
 
-/// "Çıkış ⌘Q", highlighted on hover like a menu item.
-private struct QuitRow: View {
+/// A full-width row that highlights on hover like a menu item
+/// ("AirGlass Hakkında", "Çıkış ⌘Q").
+private struct MenuRow: View {
+    let title: String
+    let shortcut: String?
+    let action: () -> Void
     @State private var isHovered = false
 
+    init(_ title: String, shortcut: String? = nil, action: @escaping () -> Void) {
+        self.title = title
+        self.shortcut = shortcut
+        self.action = action
+    }
+
     var body: some View {
-        Button {
-            NSApplication.shared.terminate(nil)
-        } label: {
+        Button(action: action) {
             HStack {
-                Text("Çıkış")
+                Text(title)
                     .font(.system(size: 13))
                     .foregroundStyle(Theme.text)
                 Spacer()
-                Text("⌘Q")
-                    .font(.system(size: 12))
-                    .foregroundStyle(Theme.secondaryText)
+                if let shortcut {
+                    Text(shortcut)
+                        .font(.system(size: 12))
+                        .foregroundStyle(Theme.secondaryText)
+                }
             }
             .padding(.horizontal, 8)
             .frame(height: 28)
@@ -465,7 +483,6 @@ private struct QuitRow: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .keyboardShortcut("q")
         .onHover { isHovered = $0 }
     }
 }
