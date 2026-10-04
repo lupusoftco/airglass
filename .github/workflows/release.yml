@@ -1,14 +1,25 @@
 name: Release
 
-# Pushing a tag like v0.1.0 builds the DMG and publishes a GitHub Release
-# with the notes in .github/release-notes/<tag>.md.
+# Builds the DMG and publishes a GitHub Release with the notes in
+# .github/release-notes/v<version>.md. Two ways to start it:
+#   - push a tag like v0.1.0, or
+#   - run it from the Actions tab ("Run workflow") with a version; the tag
+#     v<version> is then created on the selected branch.
 on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release, e.g. 0.1.0 (must match MARKETING_VERSION)"
+        required: true
 
 permissions:
   contents: write
+
+env:
+  TAG: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.version) || github.ref_name }}
 
 jobs:
   release:
@@ -22,10 +33,11 @@ jobs:
       - name: Check that the tag matches the app version
         run: |
           version=$(grep -E '^\s*MARKETING_VERSION:' project.yml | sed -E 's/.*"([^"]+)".*/\1/')
-          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
-            echo "Tag $GITHUB_REF_NAME does not match MARKETING_VERSION $version in project.yml" >&2
+          if [ "v$version" != "$TAG" ]; then
+            echo "Tag $TAG does not match MARKETING_VERSION $version in project.yml" >&2
             exit 1
           fi
+          test -f ".github/release-notes/$TAG.md" || { echo "Missing .github/release-notes/$TAG.md" >&2; exit 1; }
 
       - name: Build DMG
         run: scripts/make-dmg.sh
@@ -34,9 +46,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          notes=".github/release-notes/$GITHUB_REF_NAME.md"
-          test -f "$notes" || { echo "Missing $notes" >&2; exit 1; }
-          gh release create "$GITHUB_REF_NAME" dist/*.dmg \
-            --title "AirGlass ${GITHUB_REF_NAME#v}" \
-            --notes-file "$notes" \
-            --verify-tag
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            target=(--target "$GITHUB_SHA")   # creates the tag here
+          else
+            target=(--verify-tag)             # the pushed tag must exist
+          fi
+          gh release create "$TAG" dist/*.dmg \
+            --title "AirGlass ${TAG#v}" \
+            --notes-file ".github/release-notes/$TAG.md" \
+            "${target[@]}"
