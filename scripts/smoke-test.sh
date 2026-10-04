@@ -10,6 +10,27 @@ APP="${1:?usage: smoke-test.sh path/to/App.app [seconds]}"
 SECONDS_ALIVE="${2:-5}"
 
 EXECUTABLE=$(/usr/libexec/PlistBuddy -c "Print CFBundleExecutable" "$APP/Contents/Info.plist")
+
+team_id() {
+  codesign -dv "$1" 2>&1 | sed -n 's/^TeamIdentifier=//p'
+}
+
+# 1. Signatures. Recent macOS refuses to load a framework whose Team ID
+#    differs from the app's, even without the Hardened Runtime (the v0.1.0
+#    crash). Older systems and CI runners may still launch such an app, so
+#    check the rule itself instead of relying on the launch below.
+codesign --verify --deep --strict "$APP"
+APP_TEAM=$(team_id "$APP")
+while IFS= read -r -d '' code; do
+  CODE_TEAM=$(team_id "$code")
+  if [ "$CODE_TEAM" != "$APP_TEAM" ]; then
+    echo "smoke test FAILED: ${code#"$APP"/} has Team ID '$CODE_TEAM', the app has '$APP_TEAM'" >&2
+    exit 1
+  fi
+done < <(find "$APP/Contents/Frameworks" \( -name "*.framework" -o -name "*.dylib" \) -prune -print0 2>/dev/null)
+echo "smoke test: embedded code is signed like the app (Team ID '$APP_TEAM')"
+
+# 2. Launch.
 OUTPUT=$(mktemp)
 trap 'rm -f "$OUTPUT"' EXIT
 
