@@ -17,3 +17,11 @@ jobs:
         run: |
           xcodebuild -project AirGlass.xcodeproj -scheme AirGlass -configuration Debug \
             -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
+      - name: Package DMG (ad-hoc signed)
+        run: scripts/make-dmg.sh
+      - name: Upload DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: AirGlass-dmg
+          path: dist/*.dmg
+          if-no-files-found: error
