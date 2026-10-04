@@ -22,7 +22,7 @@ enum ConnectionState: Equatable {
 final class AppState {
     private(set) var captureMode: CaptureMode = .fullScreen
     private(set) var captureState: CaptureState = .idle
-    var connection: ConnectionState = .waiting
+    private(set) var connection: ConnectionState = .waiting
 
     private(set) var serverState: LocalServer.State = .starting
     private(set) var localAddress: String?
@@ -99,9 +99,11 @@ final class AppState {
             MainActor.assumeIsolated {
                 guard let self, self.session === session else { return }
                 self.session = nil
+                self.connection = .waiting
             }
         }
         self.session = session
+        connection = .connected(deviceName: channel.deviceName)
         session.start()
     }
 
@@ -127,6 +129,8 @@ final class AppState {
     }
 
     func disconnect() {
+        session?.end()
+        session = nil
         connection = .waiting
     }
 }

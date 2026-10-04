@@ -10,7 +10,9 @@ struct AirGlassApp: App {
                 .environment(appState)
         } label: {
             // Like AirPlay: the icon changes while someone is watching.
-            Image(systemName: appState.isStreaming ? "airplayvideo.circle.fill" : "airplayvideo")
+            // Template images from the asset catalog, tinted by the menu bar.
+            Image(appState.isStreaming ? "MenuBarActive" : "MenuBarIdle")
+                .accessibilityLabel(appState.isStreaming ? "AirGlass – izleniyor" : "AirGlass")
         }
         .menuBarExtraStyle(.window)
     }
