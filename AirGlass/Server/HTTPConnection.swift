@@ -32,6 +32,7 @@ struct HTTPRequest {
 final class HTTPConnection {
     static let maxHeadSize = 8 * 1024
     static let requestTimeout: TimeInterval = 10
+    static let lingerTimeout: TimeInterval = 2
 
     /// The request plus any bytes received after its head.
     var onRequest: ((HTTPRequest, [UInt8]) -> Void)?
@@ -83,13 +84,45 @@ final class HTTPConnection {
         }
         head += "Content-Length: \(body.count)\r\nConnection: close\r\n\r\n"
 
-        let connection = connection
+        Log.server.log("HTTP \(status, privacy: .public) (\(body.count, privacy: .public) bytes) to \(self.remoteDescription, privacy: .public)")
+        // .finalMessage sends the response followed by a FIN.
         connection.send(
             content: Data(head.utf8) + body,
             contentContext: .finalMessage,
             isComplete: true,
-            completion: .contentProcessed { _ in connection.cancel() }
+            completion: .contentProcessed { [weak self] error in
+                guard let self else { return }
+                if let error {
+                    Log.server.error("Sending response failed: \(String(describing: error), privacy: .public)")
+                    self.connection.cancel()
+                } else {
+                    self.lingerThenClose()
+                }
+            }
         )
+    }
+
+    /// Closing a TCP socket that still has unread input makes the kernel
+    /// send a RST, which can discard the response before the client reads
+    /// it. Like a "lingering close", wait for the client to close its side
+    /// (or a short timeout) before releasing the socket.
+    private func lingerThenClose() {
+        let connection = connection
+        queue.asyncAfter(deadline: .now() + Self.lingerTimeout) {
+            connection.cancel()
+        }
+        drain()
+    }
+
+    private func drain() {
+        connection.receive(minimumIncompleteLength: 1, maximumLength: 4096) { [weak self] _, _, isComplete, error in
+            guard let self else { return }
+            if isComplete || error != nil {
+                self.connection.cancel()
+            } else {
+                self.drain()
+            }
+        }
     }
 
     /// Detaches the socket so another object (the WebSocket) can own it.
