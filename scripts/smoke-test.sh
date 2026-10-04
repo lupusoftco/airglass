@@ -15,12 +15,22 @@ team_id() {
   codesign -dv "$1" 2>&1 | sed -n 's/^TeamIdentifier=//p'
 }
 
-# 1. Signatures. Recent macOS refuses to load a framework whose Team ID
-#    differs from the app's, even without the Hardened Runtime (the v0.1.0
-#    crash). Older systems and CI runners may still launch such an app, so
-#    check the rule itself instead of relying on the launch below.
+# 1. Signatures. With the Hardened Runtime, library validation only loads
+#    frameworks signed with the app's own, real Team ID; ad-hoc code has
+#    none and is refused ("different Team IDs"). That is the v0.1.0 crash.
+#    Some systems (CI runners among them) do not enforce it, so check the
+#    rule itself instead of relying on the launch below.
 codesign --verify --deep --strict "$APP"
+APP_SIGNATURE=$(codesign -dv "$APP" 2>&1)
 APP_TEAM=$(team_id "$APP")
+HARDENED=false
+grep -Eq '^CodeDirectory .*flags=[^ ]*runtime' <<<"$APP_SIGNATURE" && HARDENED=true
+
+if $HARDENED && { grep -q 'Signature=adhoc' <<<"$APP_SIGNATURE" || [ "$APP_TEAM" = "not set" ]; }; then
+  echo "smoke test FAILED: the app uses the Hardened Runtime but is ad-hoc signed;" >&2
+  echo "                   library validation will refuse its frameworks" >&2
+  exit 1
+fi
 while IFS= read -r -d '' code; do
   CODE_TEAM=$(team_id "$code")
   if [ "$CODE_TEAM" != "$APP_TEAM" ]; then
@@ -28,7 +38,7 @@ while IFS= read -r -d '' code; do
     exit 1
   fi
 done < <(find "$APP/Contents/Frameworks" \( -name "*.framework" -o -name "*.dylib" \) -prune -print0 2>/dev/null)
-echo "smoke test: embedded code is signed like the app (Team ID '$APP_TEAM')"
+echo "smoke test: signatures consistent (Team ID '$APP_TEAM', hardened runtime: $HARDENED)"
 
 # 2. Launch.
 OUTPUT=$(mktemp)
