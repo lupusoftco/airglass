@@ -3,7 +3,7 @@ CONFIG  ?= Debug
 DERIVED  = build
 APP_PATH = $(DERIVED)/Build/Products/$(CONFIG)/$(APP).app
 
-.PHONY: project build run clean
+.PHONY: project build run dmg clean
 
 project:
 	xcodegen generate
@@ -16,5 +16,8 @@ run: build
 	-pkill -x $(APP)
 	open "$(APP_PATH)"
 
+dmg:
+	scripts/make-dmg.sh
+
 clean:
-	rm -rf $(DERIVED) $(APP).xcodeproj
+	rm -rf $(DERIVED) dist $(APP).xcodeproj

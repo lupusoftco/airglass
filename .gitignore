@@ -3,14 +3,17 @@
 
 # Build output
 build/
+dist/
 DerivedData/
 *.dmg
 
-# Per-developer signing
+# Per-developer signing (see Config/Local.xcconfig.example)
 Config/Local.xcconfig
 
-# Xcode / macOS
+# Xcode / Swift Package Manager
 xcuserdata/
 *.xcuserstate
 .swiftpm/
+
+# macOS
 .DS_Store
