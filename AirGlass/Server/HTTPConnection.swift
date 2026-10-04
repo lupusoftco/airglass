@@ -53,10 +53,16 @@ final class HTTPConnection {
     }
 
     func start() {
+        let peer = remoteDescription
         connection.stateUpdateHandler = { [weak self] state in
             switch state {
-            case .failed, .cancelled: self?.finish()
-            default: break
+            case .failed(let error):
+                Log.server.error("TCP \(peer, privacy: .public) failed: \(String(describing: error), privacy: .public)")
+                self?.finish()
+            case .cancelled:
+                self?.finish()
+            default:
+                break
             }
         }
         connection.start(queue: queue)
@@ -65,6 +71,7 @@ final class HTTPConnection {
         // Drop clients that open a socket and never finish a request.
         queue.asyncAfter(deadline: .now() + Self.requestTimeout) { [weak self] in
             guard let self, !self.hasRequest else { return }
+            Log.server.error("TCP \(peer, privacy: .public): no complete request within \(Self.requestTimeout, privacy: .public) s (\(self.buffer.count, privacy: .public) bytes received); closing")
             self.connection.cancel()
         }
     }
@@ -110,6 +117,8 @@ final class HTTPConnection {
                 self.hasRequest = true
                 self.respond(status: 431, reason: "Request Header Fields Too Large")
             } else if isComplete || error != nil {
+                let reason = error.map { String(describing: $0) } ?? "EOF"
+                Log.server.log("TCP \(self.remoteDescription, privacy: .public) closed before a full request (\(self.buffer.count, privacy: .public) bytes): \(reason, privacy: .public)")
                 self.connection.cancel()
             } else {
                 self.receive()

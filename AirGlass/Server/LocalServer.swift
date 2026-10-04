@@ -87,6 +87,7 @@ final class LocalServer {
         }
 
         let http = HTTPConnection(connection: connection, queue: queue)
+        Log.server.log("TCP accepted from \(http.remoteDescription, privacy: .public) (\(self.connections.count + 1, privacy: .public) open)")
         let id = ObjectIdentifier(http)
         connections[id] = http
         http.onClose = { [weak self] in self?.connections[id] = nil }
@@ -130,6 +131,10 @@ final class LocalServer {
 
     private func upgrade(_ request: HTTPRequest, on http: HTTPConnection, leftover: [UInt8]) {
         let headers = request.headers
+        let summary = ["host", "origin", "upgrade", "connection", "sec-websocket-version", "sec-websocket-extensions", "sec-websocket-protocol"]
+            .map { "\($0)=\(headers[$0] ?? "-")" }
+            .joined(separator: " ")
+        Log.server.log("WebSocket upgrade request: \(summary, privacy: .public)")
         guard headers["upgrade"]?.lowercased() == "websocket",
               headers["connection"]?.lowercased().contains("upgrade") == true,
               headers["sec-websocket-version"] == "13",
@@ -155,7 +160,13 @@ final class LocalServer {
 
         let connection = http.handOff()
         connections[ObjectIdentifier(http)] = nil
-        connection.send(content: Data(response.utf8), completion: .contentProcessed { _ in })
+        connection.send(content: Data(response.utf8), completion: .contentProcessed { error in
+            if let error {
+                Log.server.error("Sending 101 failed: \(String(describing: error), privacy: .public)")
+            } else {
+                Log.server.log("101 Switching Protocols sent")
+            }
+        })
 
         let socket = WebSocketConnection(connection: connection, queue: queue, leftover: leftover)
         let id = ObjectIdentifier(socket)

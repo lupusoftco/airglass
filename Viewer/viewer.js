@@ -45,7 +45,21 @@
   };
 
   log(`UA: ${navigator.userAgent}`);
-  log(`secureContext=${window.isSecureContext} RTCPeerConnection=${typeof window.RTCPeerConnection}`);
+  log(`secureContext=${window.isSecureContext} RTCPeerConnection=${typeof window.RTCPeerConnection} onLine=${navigator.onLine} visibility=${document.visibilityState}`);
+
+  document.addEventListener("visibilitychange", () => log(`visibility → ${document.visibilityState}`));
+  window.addEventListener("pagehide", (event) => log(`pagehide persisted=${event.persisted}`));
+  window.addEventListener("pageshow", (event) => log(`pageshow persisted=${event.persisted}`));
+  window.addEventListener("online", () => log("online"));
+  window.addEventListener("offline", () => log("offline"));
+
+  // Does a script-initiated HTTP request to the same server get through?
+  if (debug) {
+    const started = performance.now();
+    fetch(`/viewer.css?probe=${Date.now()}`, { cache: "no-store" })
+      .then((response) => log(`fetch probe: HTTP ${response.status} ${Math.round(performance.now() - started)} ms`))
+      .catch((error) => log(`fetch probe HATA: ${error.name}: ${error.message} ${Math.round(performance.now() - started)} ms`));
+  }
 
   // --- UI ----------------------------------------------------------------
 
@@ -65,7 +79,20 @@
 
   // --- Signaling -----------------------------------------------------------
 
-  const socket = new WebSocket(`ws://${location.host}/ws`);
+  const socketURL = `ws://${location.host}/ws`;
+  log(`new WebSocket(${socketURL})`);
+  const socketStarted = performance.now();
+  const socket = new WebSocket(socketURL);
+  log(`WebSocket nesnesi oluştu, readyState=${socket.readyState}`);
+
+  // Report the handshake's progress while it is pending.
+  const readyStateNames = ["CONNECTING", "OPEN", "CLOSING", "CLOSED"];
+  const elapsed = () => `${Math.round(performance.now() - socketStarted)} ms`;
+  const watchdog = setInterval(() => {
+    log(`WS hâlâ ${readyStateNames[socket.readyState]} (${elapsed()})`);
+    if (socket.readyState !== WebSocket.CONNECTING) clearInterval(watchdog);
+  }, 2000);
+  setTimeout(() => clearInterval(watchdog), 30000);
   let peer = null;
   let welcomed = false;
   let ended = false;
@@ -91,15 +118,16 @@
   // Socket listeners are registered first so the handshake works even if
   // anything WebRTC-related fails later.
   socket.addEventListener("open", () => {
-    log("WS open");
+    log(`WS open (${elapsed()})`);
     log("→ hello");
     socket.send(JSON.stringify({ type: "hello", token }));
   });
 
-  socket.addEventListener("error", () => log("WS error"));
+  socket.addEventListener("error", () => log(`WS error (${elapsed()})`));
 
   socket.addEventListener("close", (event) => {
-    log(`WS close code=${event.code} reason="${event.reason}" clean=${event.wasClean}`);
+    clearInterval(watchdog);
+    log(`WS close code=${event.code} reason="${event.reason}" clean=${event.wasClean} (${elapsed()})`);
     end(welcomed ? "Bağlantı kesildi" : "Bağlanılamadı. QR kodu yeniden okutun.");
   });
 
