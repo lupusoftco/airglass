@@ -31,9 +31,9 @@ enum CaptureState: Equatable {
 @MainActor
 final class ScreenCapturer: NSObject {
     /// Long edge cap; keeps the later H.264 encode cheap and phone-friendly.
-    static let maxPixelEdge: CGFloat = 1920
+    nonisolated static let maxPixelEdge: CGFloat = 1920
     /// Smooth scrolling and cursor movement; idle screens cost nothing.
-    static let framesPerSecond: Int32 = 60
+    nonisolated static let framesPerSecond: Int32 = 60
 
     var onStateChange: ((CaptureState) -> Void)?
 
