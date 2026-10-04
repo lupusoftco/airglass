@@ -23,6 +23,7 @@ final class ViewerChannel {
             guard let data = text.data(using: .utf8),
                   let message = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
             else { return }
+            Log.signaling.log("← \(message["type"] as? String ?? "?", privacy: .public)")
             DispatchQueue.main.async { self?.onMessage?(message) }
         }
         socket.onClose = { [weak self] in
@@ -37,6 +38,7 @@ final class ViewerChannel {
         guard let data = try? JSONSerialization.data(withJSONObject: message),
               let text = String(data: data, encoding: .utf8)
         else { return }
+        Log.signaling.log("→ \(message["type"] as? String ?? "?", privacy: .public)")
         queue.async { [socket] in socket.send(text: text) }
     }
 

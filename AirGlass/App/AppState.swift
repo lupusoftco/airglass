@@ -29,6 +29,9 @@ final class AppState {
     /// Mirrors `tokens.current` so the QR code refreshes when it rotates.
     private(set) var token: String
 
+    /// TEMPORARY: shows the on-screen debug log on the phone. Remove before release.
+    static let viewerDebugLog = true
+
     @ObservationIgnored let capturer = ScreenCapturer()
     @ObservationIgnored private let pipeline = VideoPipeline()
     @ObservationIgnored private let tokens: TokenStore
@@ -45,7 +48,7 @@ final class AppState {
     /// fragment so it is never sent in an HTTP request.
     var viewerURL: String? {
         guard let localAddress, case .ready(let port) = serverState else { return nil }
-        return "http://\(localAddress):\(port)/#\(token)"
+        return "http://\(localAddress):\(port)/#\(token)\(Self.viewerDebugLog ? "&debug" : "")"
     }
 
     /// Why there is no QR code, if there isn't one.

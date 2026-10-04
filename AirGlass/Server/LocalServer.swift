@@ -56,8 +56,10 @@ final class LocalServer {
             guard let self, let listener, self.listener === listener else { return }
             switch state {
             case .ready:
+                Log.server.log("Listening on port \(port.rawValue, privacy: .public)")
                 self.report(.ready(port: port.rawValue))
             case .failed(let error):
+                Log.server.error("Listener on port \(port.rawValue, privacy: .public) failed: \(String(describing: error), privacy: .public)")
                 listener.cancel()
                 self.listener = nil
                 if case .posix(.EADDRINUSE) = error {
@@ -79,6 +81,7 @@ final class LocalServer {
 
     private func accept(_ connection: NWConnection) {
         guard connections.count < Self.maxConnections else {
+            Log.server.error("Too many connections; dropping \(String(describing: connection.endpoint), privacy: .public)")
             connection.cancel()
             return
         }
@@ -96,6 +99,7 @@ final class LocalServer {
     // MARK: - Routing
 
     private func route(_ request: HTTPRequest, on http: HTTPConnection, leftover: [UInt8]) {
+        Log.server.log("\(request.method, privacy: .public) \(request.path, privacy: .public) from \(http.remoteDescription, privacy: .public)")
         guard request.method == "GET" else {
             http.respond(status: 405, reason: "Method Not Allowed", headers: [("Allow", "GET")])
             return
@@ -132,12 +136,14 @@ final class LocalServer {
               let key = headers["sec-websocket-key"], !key.isEmpty,
               let host = headers["host"]
         else {
+            Log.server.error("WebSocket upgrade rejected: missing or invalid headers")
             http.respond(status: 400, reason: "Bad Request")
             return
         }
         // Only our own page may open the socket (guards against other sites
         // in the phone's browser and DNS rebinding).
         if let origin = headers["origin"], origin != "http://\(host)" {
+            Log.server.error("WebSocket upgrade rejected: origin \(origin, privacy: .public) ≠ host \(host, privacy: .public)")
             http.respond(status: 403, reason: "Forbidden")
             return
         }
@@ -155,6 +161,7 @@ final class LocalServer {
         let id = ObjectIdentifier(socket)
         connections[id] = socket
         let deviceName = Self.deviceName(fromUserAgent: headers["user-agent"])
+        Log.server.log("WebSocket open (\(deviceName, privacy: .public), UA: \(headers["user-agent"] ?? "-", privacy: .public))")
 
         var isAuthenticated = false
         socket.onClose = { [weak self] in self?.connections[id] = nil }
@@ -162,10 +169,12 @@ final class LocalServer {
             guard let self else { return }
             guard !isAuthenticated, self.isValidHello(text) else {
                 // Same response for every failure: reveal nothing.
+                Log.server.error("Hello rejected (malformed message or wrong token)")
                 socket.close(.policyViolation)
                 return
             }
             isAuthenticated = true
+            Log.server.log("Hello accepted; viewer authenticated (\(deviceName, privacy: .public))")
             socket.send(text: #"{"type":"welcome"}"#)
 
             let channel = ViewerChannel(socket: socket, queue: self.queue, deviceName: deviceName)
@@ -180,7 +189,9 @@ final class LocalServer {
         socket.start()
 
         queue.asyncAfter(deadline: .now() + Self.helloTimeout) { [weak socket] in
-            if !isAuthenticated { socket?.close(.policyViolation) }
+            guard !isAuthenticated, let socket else { return }
+            Log.server.error("No hello within \(Self.helloTimeout, privacy: .public) s; closing WebSocket")
+            socket.close(.policyViolation)
         }
     }
 

@@ -32,12 +32,16 @@ final class PeerSession: NSObject {
         let constraints = RTCMediaConstraints(mandatoryConstraints: nil, optionalConstraints: nil)
         guard let peerConnection = pipeline.factory.peerConnection(
             with: configuration, constraints: constraints, delegate: nil
-        ) else { return nil }
+        ) else {
+            Log.webrtc.error("Could not create RTCPeerConnection")
+            return nil
+        }
 
         let transceiverInit = RTCRtpTransceiverInit()
         transceiverInit.direction = .sendOnly
         transceiverInit.streamIds = ["airglass"]
         guard let transceiver = peerConnection.addTransceiver(with: pipeline.videoTrack, init: transceiverInit) else {
+            Log.webrtc.error("Could not add video transceiver")
             peerConnection.close()
             return nil
         }
@@ -57,11 +61,18 @@ final class PeerSession: NSObject {
         peerConnection.offer(for: constraints) { [weak self] offer, error in
             DispatchQueue.main.async {
                 guard let self else { return }
-                guard let offer, error == nil else { return self.end() }
+                guard let offer, error == nil else {
+                    Log.webrtc.error("createOffer failed: \(String(describing: error), privacy: .public)")
+                    return self.end()
+                }
+                Log.webrtc.log("Offer created; video codecs: \(Self.videoCodecs(in: offer.sdp), privacy: .public)")
                 self.peerConnection.setLocalDescription(offer) { [weak self] error in
                     DispatchQueue.main.async {
                         guard let self else { return }
-                        guard error == nil else { return self.end() }
+                        guard error == nil else {
+                            Log.webrtc.error("setLocalDescription failed: \(String(describing: error), privacy: .public)")
+                            return self.end()
+                        }
                         self.channel.send(["type": "offer", "sdp": offer.sdp])
                     }
                 }
@@ -72,6 +83,7 @@ final class PeerSession: NSObject {
     func end() {
         guard !isEnded else { return }
         isEnded = true
+        Log.webrtc.log("Session ended")
         peerConnection.delegate = nil
         peerConnection.close()
         channel.close()
@@ -90,7 +102,11 @@ final class PeerSession: NSObject {
             peerConnection.setRemoteDescription(answer) { [weak self] error in
                 DispatchQueue.main.async {
                     guard let self else { return }
-                    guard error == nil else { return self.end() }
+                    guard error == nil else {
+                        Log.webrtc.error("setRemoteDescription(answer) failed: \(String(describing: error), privacy: .public)")
+                        return self.end()
+                    }
+                    Log.webrtc.log("Answer applied; video codecs: \(Self.videoCodecs(in: sdp), privacy: .public)")
                     self.hasRemoteDescription = true
                     self.configureSender()
                     self.pendingCandidates.forEach(self.addCandidate)
@@ -105,6 +121,7 @@ final class PeerSession: NSObject {
                 sdpMLineIndex: Int32(message["sdpMLineIndex"] as? Int ?? 0),
                 sdpMid: message["sdpMid"] as? String
             )
+            Log.webrtc.log("Remote candidate: \(Log.describeCandidate(sdp), privacy: .public)")
             if hasRemoteDescription {
                 addCandidate(candidate)
             } else {
@@ -117,7 +134,11 @@ final class PeerSession: NSObject {
     }
 
     private func addCandidate(_ candidate: RTCIceCandidate) {
-        peerConnection.add(candidate) { _ in }
+        peerConnection.add(candidate) { error in
+            if let error {
+                Log.webrtc.error("addIceCandidate failed: \(String(describing: error), privacy: .public)")
+            }
+        }
     }
 
     /// Screen content: keep text sharp and drop frames rather than resolution.
@@ -130,6 +151,18 @@ final class PeerSession: NSObject {
         }
         transceiver.sender.parameters = parameters
     }
+
+    private static func name(_ rawValue: Int, _ names: [String]) -> String {
+        names.indices.contains(rawValue) ? names[rawValue] : "\(rawValue)"
+    }
+
+    /// "H264/90000, rtx/90000" from the first video m-section.
+    private static func videoCodecs(in sdp: String) -> String {
+        sdp.components(separatedBy: "\r\n")
+            .filter { $0.hasPrefix("a=rtpmap:") }
+            .compactMap { $0.split(separator: " ", maxSplits: 1).last.map(String.init) }
+            .joined(separator: ", ")
+    }
 }
 
 // MARK: - RTCPeerConnectionDelegate
@@ -137,6 +170,7 @@ final class PeerSession: NSObject {
 // Called on WebRTC's signaling thread; hop to main before touching state.
 extension PeerSession: RTCPeerConnectionDelegate {
     func peerConnection(_ peerConnection: RTCPeerConnection, didGenerate candidate: RTCIceCandidate) {
+        Log.webrtc.log("Local candidate: \(Log.describeCandidate(candidate.sdp), privacy: .public)")
         let message: [String: Any] = [
             "type": "candidate",
             "candidate": candidate.sdp,
@@ -150,16 +184,24 @@ extension PeerSession: RTCPeerConnectionDelegate {
     }
 
     func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCPeerConnectionState) {
+        Log.webrtc.log("connectionState → \(Self.name(newState.rawValue, ["new", "connecting", "connected", "disconnected", "failed", "closed"]), privacy: .public)")
         guard newState == .failed || newState == .closed else { return }
         DispatchQueue.main.async { [weak self] in self?.end() }
     }
 
-    func peerConnection(_ peerConnection: RTCPeerConnection, didChange stateChanged: RTCSignalingState) {}
+    func peerConnection(_ peerConnection: RTCPeerConnection, didChange stateChanged: RTCSignalingState) {
+        Log.webrtc.log("signalingState → \(Self.name(stateChanged.rawValue, ["stable", "have-local-offer", "have-local-pranswer", "have-remote-offer", "have-remote-pranswer", "closed"]), privacy: .public)")
+    }
     func peerConnection(_ peerConnection: RTCPeerConnection, didAdd stream: RTCMediaStream) {}
     func peerConnection(_ peerConnection: RTCPeerConnection, didRemove stream: RTCMediaStream) {}
     func peerConnectionShouldNegotiate(_ peerConnection: RTCPeerConnection) {}
-    func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceConnectionState) {}
-    func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceGatheringState) {}
+    func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceConnectionState) {
+        Log.webrtc.log("iceConnectionState → \(Self.name(newState.rawValue, ["new", "checking", "connected", "completed", "failed", "disconnected", "closed"]), privacy: .public)")
+    }
+
+    func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceGatheringState) {
+        Log.webrtc.log("iceGatheringState → \(Self.name(newState.rawValue, ["new", "gathering", "complete"]), privacy: .public)")
+    }
     func peerConnection(_ peerConnection: RTCPeerConnection, didRemove candidates: [RTCIceCandidate]) {}
     func peerConnection(_ peerConnection: RTCPeerConnection, didOpen dataChannel: RTCDataChannel) {}
 }

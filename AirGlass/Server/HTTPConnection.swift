@@ -43,6 +43,10 @@ final class HTTPConnection {
     private var hasRequest = false
     private var isFinished = false
 
+    var remoteDescription: String {
+        String(describing: connection.endpoint)
+    }
+
     init(connection: NWConnection, queue: DispatchQueue) {
         self.connection = connection
         self.queue = queue

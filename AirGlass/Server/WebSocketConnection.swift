@@ -72,6 +72,7 @@ final class WebSocketConnection {
 
     func close(_ code: CloseCode = .normal) {
         guard !isClosing else { return }
+        Log.server.log("WebSocket closing with code \(code.rawValue, privacy: .public)")
         isClosing = true
         let payload = [UInt8(code.rawValue >> 8), UInt8(code.rawValue & 0xFF)]
         let connection = connection
@@ -89,6 +90,10 @@ final class WebSocketConnection {
                 self.processBuffer()
             }
             if isComplete || error != nil {
+                if !self.isClosing {
+                    let reason = error.map { String(describing: $0) } ?? "EOF"
+                    Log.server.log("WebSocket connection ended by peer: \(reason, privacy: .public)")
+                }
                 self.connection.cancel()
                 self.notifyClosed()
             } else if !self.isClosing {
@@ -118,6 +123,8 @@ final class WebSocketConnection {
         case .pong:
             break
         case .close:
+            let code = frame.payload.count >= 2 ? UInt16(frame.payload[0]) << 8 | UInt16(frame.payload[1]) : 0
+            Log.server.log("WebSocket close frame from client, code \(code, privacy: .public)")
             close(.normal)
         }
     }
