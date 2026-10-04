@@ -39,7 +39,12 @@ VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "$APP_PA
 DMG="dist/$APP-$VERSION.dmg"
 
 STAGING=$(mktemp -d)
-trap 'rm -rf "$STAGING"' EXIT
+MOUNT=$(mktemp -d)
+cleanup() {
+  hdiutil detach -quiet "$MOUNT" 2>/dev/null || true
+  rm -rf "$STAGING" "$MOUNT"
+}
+trap cleanup EXIT
 ditto "$APP_PATH" "$STAGING/$APP.app"
 ln -s /Applications "$STAGING/Applications"
 
@@ -47,5 +52,13 @@ echo "==> Creating $DMG"
 mkdir -p dist
 rm -f "$DMG"
 hdiutil create -quiet -volname "$APP" -srcfolder "$STAGING" -fs HFS+ -format UDZO -ov "$DMG"
+
+# Test exactly what users get: the app as it sits inside the DMG.
+echo "==> Smoke-testing the app inside $DMG"
+hdiutil attach -quiet -nobrowse -readonly -mountpoint "$MOUNT" "$DMG"
+if ! scripts/smoke-test.sh "$MOUNT/$APP.app"; then
+  rm -f "$DMG"
+  exit 1
+fi
 
 echo "$DMG"
