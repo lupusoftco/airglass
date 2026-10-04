@@ -54,22 +54,142 @@
     `${message.type}${message.type === "candidate" ? ` ${describeCandidate(message.candidate || "")}` : ""}`;
 
   log(`UA: ${navigator.userAgent}`);
-  log(`secureContext=${window.isSecureContext} RTCPeerConnection=${typeof window.RTCPeerConnection}`);
-  document.addEventListener("visibilitychange", () => log(`visibility → ${document.visibilityState}`));
+  log(`secureContext=${window.isSecureContext} RTCPeerConnection=${typeof window.RTCPeerConnection} wakeLock=${"wakeLock" in navigator}`);
 
-  // --- UI ----------------------------------------------------------------
+  // --- Screens -------------------------------------------------------------
+  //
+  // 1 · connecting (spinner), 2 · live (video only), 3 · ended (message).
 
-  const statusEl = document.getElementById("status");
   const video = document.getElementById("video");
+  const connectingEl = document.getElementById("connecting");
+  const endedEl = document.getElementById("ended");
+  const endedTitle = document.getElementById("ended-title");
+  const endedMessage = document.getElementById("ended-message");
 
-  const setStatus = (text) => {
-    statusEl.textContent = text || "";
-    statusEl.hidden = !text;
+  const ENDINGS = {
+    disconnected: ["Bağlantı kesildi", "Yeniden izlemek için Mac'teki QR kodu yeniden okutun."],
+    rejected: ["Bağlanılamadı", "Bu QR kod artık geçerli değil. Mac'teki güncel QR kodu okutun."],
+    noToken: ["Bağlantı geçersiz", "Mac'teki QR kodu telefonunun kamerasıyla okutun."],
+    unsupported: ["Görüntü açılamadı", "Bu tarayıcı görüntüyü oynatamıyor."],
   };
+
+  const showLive = () => {
+    connectingEl.hidden = true;
+    endedEl.hidden = true;
+  };
+
+  const showEnded = (kind) => {
+    const [title, message] = ENDINGS[kind];
+    endedTitle.textContent = title;
+    endedMessage.textContent = message;
+    connectingEl.hidden = true;
+    endedEl.hidden = false;
+  };
+
+  // --- Keeping the screen awake -------------------------------------------
+  //
+  // 1. Screen Wake Lock API, if the browser offers it (it needs a secure
+  //    context, so over plain http it is usually missing).
+  // 2. Otherwise a tiny silent video with a (silent) audio track, started by
+  //    the first tap, the technique NoSleep.js uses. WebKit lets looping
+  //    media sleep, so it is rewound by hand instead of using `loop`.
+  // Native fullscreen video keeps the screen on by itself as well.
+
+  const keepAwake = (() => {
+    let method = null;
+    let wakeLock = null;
+    let silentVideo = null;
+
+    const requestWakeLock = async () => {
+      try {
+        wakeLock = await navigator.wakeLock.request("screen");
+        wakeLock.addEventListener("release", () => log("Wake Lock bırakıldı"));
+        return true;
+      } catch (error) {
+        log(`Wake Lock alınamadı: ${error.name}: ${error.message}`);
+        return false;
+      }
+    };
+
+    // Must run inside a user gesture: it starts playback with sound.
+    const playSilentVideo = () => {
+      if (!silentVideo) {
+        silentVideo = document.createElement("video");
+        silentVideo.className = "keepawake";
+        silentVideo.setAttribute("playsinline", "");
+        silentVideo.setAttribute("aria-hidden", "true");
+        silentVideo.preload = "auto";
+        silentVideo.src = "keepawake.mp4";
+        silentVideo.addEventListener("timeupdate", () => {
+          if (silentVideo.currentTime > 1.5) silentVideo.currentTime = 0.5;
+        });
+        silentVideo.addEventListener("ended", () => silentVideo.play().catch(() => {}));
+        document.body.appendChild(silentVideo);
+      }
+      return silentVideo.play().then(
+        () => true,
+        (error) => {
+          log(`Sessiz video oynatılamadı: ${error.name}: ${error.message}`);
+          return false;
+        },
+      );
+    };
+
+    return {
+      /** Without a gesture: only the Wake Lock API can start here. */
+      async startIfPossible() {
+        if (method || !("wakeLock" in navigator)) return;
+        if (await requestWakeLock()) {
+          method = "wakeLock";
+          log("Ekran açık tutma: Screen Wake Lock API");
+        }
+      },
+      /** From a tap. */
+      async start() {
+        if (method) return;
+        if (!("wakeLock" in navigator)) {
+          // Started synchronously so the tap still counts as the gesture.
+          const started = playSilentVideo();
+          if (await started) {
+            method = "video";
+            log("Ekran açık tutma: sessiz döngü video (NoSleep yöntemi; Wake Lock API yok)");
+          }
+          return;
+        }
+        await this.startIfPossible();
+      },
+      async resume() {
+        if (method === "wakeLock" && (!wakeLock || wakeLock.released)) await requestWakeLock();
+        if (method === "video") silentVideo.play().catch(() => {});
+      },
+      stop() {
+        if (!method) return;
+        if (wakeLock) wakeLock.release().catch(() => {});
+        if (silentVideo) silentVideo.pause();
+        wakeLock = null;
+        method = null;
+        log("Ekran açık tutma kapatıldı");
+      },
+      get method() {
+        return method;
+      },
+    };
+  })();
+
+  if ("wakeLock" in navigator) {
+    keepAwake.startIfPossible();
+  } else {
+    log("Screen Wake Lock API yok; ilk dokunuşta sessiz video başlayacak");
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    log(`visibility → ${document.visibilityState}`);
+    if (document.visibilityState === "visible") keepAwake.resume();
+  });
 
   if (!token) {
     log("Fragment'ta token yok");
-    setStatus("Bağlantı geçersiz. QR kodu yeniden okutun.");
+    showEnded("noToken");
     return;
   }
 
@@ -96,14 +216,16 @@
       ...options,
     });
 
-  const end = (text) => {
+  const end = (kind) => {
     if (ended) return;
     ended = true;
-    log(`Bitti: ${text}`);
+    log(`Bitti: ${kind}`);
     if (peer) peer.close();
     exitFullscreen();
+    keepAwake.stop();
+    fullscreenButton.hidden = true;
     video.srcObject = null;
-    setStatus(text);
+    showEnded(kind);
   };
 
   // Sends are chained so the Mac receives them in order (an answer must
@@ -116,11 +238,11 @@
       const response = await request("POST", "/signal/send", message);
       if (!response.ok) {
         log(`→ ${message.type} reddedildi: HTTP ${response.status}`);
-        end("Bağlantı kesildi");
+        end("disconnected");
       }
     }).catch((error) => {
       log(`→ ${message.type} gönderilemedi: ${error.name}: ${error.message}`);
-      end("Bağlantı kesildi");
+      end("disconnected");
     });
   };
 
@@ -131,17 +253,18 @@
       try {
         response = await request("GET", "/signal/poll");
       } catch (error) {
-        // A dropped long poll is not fatal; give up after a few in a row.
+        // A dropped long poll (e.g. while the phone was briefly asleep) is
+        // not fatal; give up only after several in a row.
         failures += 1;
         log(`poll ağ hatası (${failures}): ${error.name}: ${error.message}`);
-        if (failures >= 3) return end("Bağlantı kesildi");
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        if (failures >= 5) return end("disconnected");
+        await new Promise((resolve) => setTimeout(resolve, 500 * failures));
         continue;
       }
       failures = 0;
       if (!response.ok) {
         log(`poll: HTTP ${response.status}`);
-        return end("Bağlantı kesildi");
+        return end("disconnected");
       }
       const messages = await response.json();
       for (const message of messages) {
@@ -155,23 +278,25 @@
   //
   // iPhone Safari only allows real fullscreen for a <video> element, and only
   // from a user gesture (webkitEnterFullscreen). The first tap goes
-  // fullscreen; afterwards a tap shows a fullscreen button for 3 seconds.
+  // fullscreen; afterwards a tap shows (or hides) the fullscreen button,
+  // which hides itself again after 3 seconds.
 
   const fullscreenButton = document.getElementById("fullscreen");
   let firstTapHandled = false;
   let hideButtonTimer = null;
 
+  const isLive = () => !ended && Boolean(video.srcObject) && video.readyState >= 1;
   const isFullscreen = () => Boolean(video.webkitDisplayingFullscreen || document.fullscreenElement);
 
   const enterFullscreen = () => {
-    if (ended || isFullscreen()) return;
+    if (!isLive() || isFullscreen()) return;
     try {
-      if (video.webkitEnterFullscreen && video.readyState >= 1) {
+      if (video.webkitEnterFullscreen) {
         video.webkitEnterFullscreen();
       } else if (document.documentElement.requestFullscreen) {
         document.documentElement.requestFullscreen().catch((error) => log(`Tam ekran reddedildi: ${error.name}`));
       } else {
-        log("Tam ekran bu tarayıcıda yok veya görüntü henüz hazır değil");
+        log("Tam ekran bu tarayıcıda yok");
       }
     } catch (error) {
       log(`Tam ekran açılamadı: ${error.name}: ${error.message}`);
@@ -187,31 +312,36 @@
     }
   }
 
-  const flashFullscreenButton = () => {
-    if (ended || !video.srcObject || isFullscreen()) return;
+  const hideFullscreenButton = () => {
+    clearTimeout(hideButtonTimer);
+    fullscreenButton.hidden = true;
+  };
+
+  const toggleFullscreenButton = () => {
+    if (!fullscreenButton.hidden) return hideFullscreenButton();
+    if (!isLive() || isFullscreen()) return;
     fullscreenButton.hidden = false;
     clearTimeout(hideButtonTimer);
-    hideButtonTimer = setTimeout(() => {
-      fullscreenButton.hidden = true;
-    }, 3000);
+    hideButtonTimer = setTimeout(hideFullscreenButton, 3000);
   };
 
   document.addEventListener("click", () => {
-    if (!firstTapHandled && video.srcObject) {
+    keepAwake.start();
+    if (!firstTapHandled && isLive()) {
       firstTapHandled = true;
       enterFullscreen();
     } else {
-      flashFullscreenButton();
+      toggleFullscreenButton();
     }
   });
 
   fullscreenButton.addEventListener("click", (event) => {
     event.stopPropagation();
-    fullscreenButton.hidden = true;
+    hideFullscreenButton();
     enterFullscreen();
   });
 
-  video.addEventListener("webkitbeginfullscreen", () => log("Tam ekran açıldı"));
+  video.addEventListener("webkitbeginfullscreen", () => log("Tam ekran açıldı (iOS ekranı açık tutar)"));
   video.addEventListener("webkitendfullscreen", () => {
     log("Tam ekrandan çıkıldı");
     // iOS pauses the video when leaving its fullscreen player.
@@ -225,12 +355,24 @@
 
   // --- WebRTC --------------------------------------------------------------
 
+  // If the connection drops, the Mac tries one ICE restart; give it this
+  // long before calling it over.
+  const recoveryTimeout = 15000;
+  let recoveryTimer = null;
+
   const createPeer = () => {
     // Local network only: no STUN/TURN servers, host candidates only.
     const pc = new RTCPeerConnection({ iceServers: [] });
 
     pc.addEventListener("track", (event) => {
       log(`track: ${event.track.kind}`);
+      // Low latency: play frames as soon as they are decodable.
+      try {
+        if ("jitterBufferTarget" in event.receiver) event.receiver.jitterBufferTarget = 0;
+        if ("playoutDelayHint" in event.receiver) event.receiver.playoutDelayHint = 0;
+      } catch (error) {
+        log(`Gecikme ayarı uygulanamadı: ${error.name}`);
+      }
       video.srcObject = event.streams[0] || new MediaStream([event.track]);
       video.play().catch((error) => log(`video.play() reddedildi: ${error.name}`));
     });
@@ -253,20 +395,31 @@
     pc.addEventListener("iceconnectionstatechange", () => log(`iceConnectionState → ${pc.iceConnectionState}`));
     pc.addEventListener("icegatheringstatechange", () => log(`iceGatheringState → ${pc.iceGatheringState}`));
     pc.addEventListener("connectionstatechange", () => {
-      log(`connectionState → ${pc.connectionState}`);
-      if (pc.connectionState === "failed") end("Bağlantı kesildi");
+      const state = pc.connectionState;
+      log(`connectionState → ${state}`);
+      if (state === "connected") {
+        clearTimeout(recoveryTimer);
+        recoveryTimer = null;
+      } else if ((state === "disconnected" || state === "failed") && !recoveryTimer) {
+        // Keep the last frame on screen while the Mac tries to recover.
+        recoveryTimer = setTimeout(() => {
+          if (pc.connectionState !== "connected") end("disconnected");
+        }, recoveryTimeout);
+      }
     });
     return pc;
   };
 
   video.addEventListener("playing", () => {
     log(`video oynuyor ${video.videoWidth}×${video.videoHeight}`);
-    setStatus("");
+    showLive();
   });
+  video.addEventListener("resize", () => log(`video boyutu ${video.videoWidth}×${video.videoHeight}`));
 
   const handle = async (message) => {
     switch (message.type) {
       case "offer":
+        // The first offer, or a renegotiation (ICE restart) on the same peer.
         if (!peer) peer = createPeer();
         await peer.setRemoteDescription({ type: "offer", sdp: message.sdp });
         await peer.setLocalDescription(await peer.createAnswer());
@@ -291,7 +444,7 @@
       .then(() => handle(message))
       .catch((error) => {
         log(`${message.type} işlenemedi: ${error && error.name}: ${error && error.message}`);
-        if (message.type === "offer") end("Bu tarayıcı görüntüyü açamadı.");
+        if (message.type === "offer" && !video.srcObject) end("unsupported");
       });
   };
 
@@ -311,15 +464,14 @@
       response = await request("POST", "/signal/hello", { token });
     } catch (error) {
       log(`hello ağ hatası: ${error.name}: ${error.message}`);
-      return end("Bağlanılamadı. QR kodu yeniden okutun.");
+      return end("rejected");
     }
     if (!response.ok) {
       log(`hello reddedildi: HTTP ${response.status}`);
-      return end("Bağlanılamadı. QR kodu yeniden okutun.");
+      return end("rejected");
     }
     session = (await response.json()).session;
     log("← hello kabul edildi");
-    setStatus("Bağlandı. Görüntü bekleniyor…");
     poll();
   })();
 })();

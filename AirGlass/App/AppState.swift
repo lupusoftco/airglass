@@ -12,7 +12,15 @@ enum ConnectionState: Equatable {
     /// Waiting for a viewer to scan the QR code.
     case waiting
     /// A single viewer is watching.
-    case connected(deviceName: String)
+    case connected(deviceName: String, address: String)
+}
+
+/// The four popover designs.
+enum PopoverState: Equatable {
+    case waiting
+    case connected(deviceName: String, address: String)
+    case permissionNeeded
+    case offline(String)
 }
 
 /// Single source of truth for the UI. Capture, server and WebRTC layers
@@ -41,6 +49,22 @@ final class AppState {
         return false
     }
 
+    var popoverState: PopoverState {
+        if case .connected(let deviceName, let address) = connection {
+            return .connected(deviceName: deviceName, address: address)
+        }
+        if captureState == .permissionDenied { return .permissionNeeded }
+        if let unavailableReason { return .offline(unavailableReason) }
+        if viewerURL == nil { return .offline("Yerel sunucu başlatılıyor…") }
+        return .waiting
+    }
+
+    /// "192.168.1.24:3131", shown under the QR code (without the token).
+    var viewerHost: String? {
+        guard let localAddress, case .ready(let port) = serverState else { return nil }
+        return "\(localAddress):\(port)"
+    }
+
     /// What the QR code encodes: the page on this Mac, with the token in the
     /// fragment so it is never sent in an HTTP request.
     var viewerURL: String? {
@@ -50,8 +74,8 @@ final class AppState {
 
     /// Why there is no QR code, if there isn't one.
     var unavailableReason: String? {
-        if case .failed = serverState { return "Yerel sunucu başlatılamadı." }
-        if localAddress == nil { return "Wi-Fi veya Ethernet bağlantısı yok." }
+        if case .failed = serverState { return "Yerel sunucu başlatılamadı" }
+        if localAddress == nil { return "Wi-Fi veya Ethernet bağlantısı yok" }
         return nil
     }
 
@@ -100,7 +124,7 @@ final class AppState {
             }
         }
         self.session = session
-        connection = .connected(deviceName: channel.deviceName)
+        connection = .connected(deviceName: channel.deviceName, address: channel.remoteAddress)
         session.start()
     }
 

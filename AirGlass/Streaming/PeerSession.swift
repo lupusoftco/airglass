@@ -7,7 +7,9 @@ import WebRTC
 final class PeerSession: NSObject {
     /// Generous for a LAN; WebRTC still adapts down on a weak link.
     static let maxBitrate = 8_000_000
-    static let maxFramerate = 30
+    static let maxFramerate = Int(ScreenCapturer.framesPerSecond)
+    /// After one ICE restart, how long the connection may take to come back.
+    static let recoveryTimeout: TimeInterval = 15
 
     /// Called once on the main thread when the session ends for any reason.
     var onEnd: (() -> Void)?
@@ -18,6 +20,9 @@ final class PeerSession: NSObject {
     private var pendingCandidates: [RTCIceCandidate] = []
     private var hasRemoteDescription = false
     private var isEnded = false
+    /// One ICE restart per drop; reset once connected again.
+    private var didAttemptRestart = false
+    private var recoveryWork: DispatchWorkItem?
 
     init?(channel: ViewerChannel, pipeline: VideoPipeline) {
         let configuration = RTCConfiguration()
@@ -57,6 +62,12 @@ final class PeerSession: NSObject {
     }
 
     func start() {
+        sendOffer()
+    }
+
+    /// Creates an offer (the first one, or after `restartIce()` one with new
+    /// ICE credentials) and sends it to the viewer.
+    private func sendOffer() {
         let constraints = RTCMediaConstraints(mandatoryConstraints: nil, optionalConstraints: nil)
         peerConnection.offer(for: constraints) { [weak self] offer, error in
             DispatchQueue.main.async {
@@ -84,6 +95,7 @@ final class PeerSession: NSObject {
         guard !isEnded else { return }
         isEnded = true
         Log.webrtc.log("Session ended")
+        recoveryWork?.cancel()
         peerConnection.delegate = nil
         peerConnection.close()
         channel.close()
@@ -97,7 +109,7 @@ final class PeerSession: NSObject {
         guard !isEnded else { return }
         switch message["type"] as? String {
         case "answer":
-            guard !hasRemoteDescription, let sdp = message["sdp"] as? String else { return }
+            guard peerConnection.signalingState == .haveLocalOffer, let sdp = message["sdp"] as? String else { return }
             let answer = RTCSessionDescription(type: .answer, sdp: sdp)
             peerConnection.setRemoteDescription(answer) { [weak self] error in
                 DispatchQueue.main.async {
@@ -139,6 +151,46 @@ final class PeerSession: NSObject {
                 Log.webrtc.error("addIceCandidate failed: \(String(describing: error), privacy: .public)")
             }
         }
+    }
+
+    // MARK: - Recovery
+
+    /// A brief Wi-Fi hiccup should not end the session: on failure, try one
+    /// ICE restart over the still-working HTTP signaling channel.
+    private func connectionStateChanged(_ state: RTCPeerConnectionState) {
+        guard !isEnded else { return }
+        switch state {
+        case .connected:
+            recoveryWork?.cancel()
+            recoveryWork = nil
+            didAttemptRestart = false
+        case .failed:
+            if didAttemptRestart {
+                end()
+            } else {
+                restartIce()
+            }
+        case .closed:
+            end()
+        default:
+            break
+        }
+    }
+
+    private func restartIce() {
+        didAttemptRestart = true
+        Log.webrtc.log("Connection failed; restarting ICE")
+        peerConnection.restartIce()
+        sendOffer()
+
+        recoveryWork?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            guard let self, self.peerConnection.connectionState != .connected else { return }
+            Log.webrtc.error("ICE restart did not recover the connection")
+            self.end()
+        }
+        recoveryWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.recoveryTimeout, execute: work)
     }
 
     /// Screen content: keep text sharp and drop frames rather than resolution.
@@ -185,8 +237,7 @@ extension PeerSession: RTCPeerConnectionDelegate {
 
     func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCPeerConnectionState) {
         Log.webrtc.log("connectionState → \(Self.name(newState.rawValue, ["new", "connecting", "connected", "disconnected", "failed", "closed"]), privacy: .public)")
-        guard newState == .failed || newState == .closed else { return }
-        DispatchQueue.main.async { [weak self] in self?.end() }
+        DispatchQueue.main.async { [weak self] in self?.connectionStateChanged(newState) }
     }
 
     func peerConnection(_ peerConnection: RTCPeerConnection, didChange stateChanged: RTCSignalingState) {

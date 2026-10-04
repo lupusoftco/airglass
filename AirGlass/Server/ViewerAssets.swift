@@ -15,6 +15,8 @@ struct ViewerAssets {
             "/": ("index.html", "text/html; charset=utf-8"),
             "/viewer.js": ("viewer.js", "text/javascript; charset=utf-8"),
             "/viewer.css": ("viewer.css", "text/css; charset=utf-8"),
+            // Silent clip that keeps the phone awake (see viewer.js).
+            "/keepawake.mp4": ("keepawake.mp4", "video/mp4"),
         ]
         let directory = bundle.resourceURL?.appendingPathComponent("Viewer", isDirectory: true)
 

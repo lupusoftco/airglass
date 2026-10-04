@@ -114,9 +114,50 @@ final class LocalServer {
             return
         }
         if let asset = assets[request.path] {
-            http.respond(status: 200, reason: "OK", headers: Self.assetHeaders(contentType: asset.contentType), body: asset.data)
+            respond(with: asset, to: request, on: http)
         } else {
             http.respond(status: 404, reason: "Not Found")
+        }
+    }
+
+    /// Serves a bundled file, honouring a single byte range: Safari only
+    /// plays media from servers that support range requests.
+    private func respond(with asset: ViewerAssets.Asset, to request: HTTPRequest, on http: HTTPConnection) {
+        var headers = Self.assetHeaders(contentType: asset.contentType)
+        headers.append(("Accept-Ranges", "bytes"))
+        let total = asset.data.count
+
+        guard let rangeHeader = request.headers["range"] else {
+            http.respond(status: 200, reason: "OK", headers: headers, body: asset.data)
+            return
+        }
+        guard let range = Self.byteRange(rangeHeader, total: total) else {
+            headers.append(("Content-Range", "bytes */\(total)"))
+            http.respond(status: 416, reason: "Range Not Satisfiable", headers: headers)
+            return
+        }
+        headers.append(("Content-Range", "bytes \(range.lowerBound)-\(range.upperBound)/\(total)"))
+        http.respond(status: 206, reason: "Partial Content", headers: headers,
+                     body: asset.data.subdata(in: range.lowerBound..<(range.upperBound + 1)))
+    }
+
+    /// "bytes=0-1", "bytes=100-" or "bytes=-500" → an inclusive range.
+    private static func byteRange(_ header: String, total: Int) -> ClosedRange<Int>? {
+        guard total > 0, header.hasPrefix("bytes="), !header.contains(",") else { return nil }
+        let parts = header.dropFirst("bytes=".count).split(separator: "-", omittingEmptySubsequences: false)
+        guard parts.count == 2 else { return nil }
+        let start = Int(parts[0].trimmingCharacters(in: .whitespaces))
+        let end = Int(parts[1].trimmingCharacters(in: .whitespaces))
+
+        switch (start, end) {
+        case let (start?, end?) where start <= end && start < total:
+            return start...min(end, total - 1)
+        case let (start?, nil) where start < total:
+            return start...(total - 1)
+        case let (nil, suffix?) where suffix > 0:
+            return max(0, total - suffix)...(total - 1)
+        default:
+            return nil
         }
     }
 
@@ -189,7 +230,11 @@ final class LocalServer {
 
         let deviceName = Self.deviceName(fromUserAgent: request.headers["user-agent"])
         let sessionID = TokenStore.generate()
-        let channel = ViewerChannel(deviceName: deviceName, queue: queue)
+        let channel = ViewerChannel(
+            deviceName: deviceName,
+            remoteAddress: Self.host(fromEndpoint: http.remoteDescription),
+            queue: queue
+        )
         channels[sessionID] = channel
         channel.onEnded = { [weak self] in self?.channels[sessionID] = nil }
 
@@ -207,14 +252,39 @@ final class LocalServer {
         http.respond(status: 403, reason: "Forbidden")
     }
 
+    /// "iPhone — Safari" from a User-Agent header.
     private static func deviceName(fromUserAgent userAgent: String?) -> String {
         guard let userAgent else { return "Tarayıcı" }
-        if userAgent.contains("iPhone") { return "iPhone" }
-        if userAgent.contains("iPad") { return "iPad" }
-        if userAgent.contains("Android") { return "Android" }
+
+        let device: String
+        if userAgent.contains("iPhone") { device = "iPhone" }
+        else if userAgent.contains("iPad") { device = "iPad" }
+        else if userAgent.contains("Android") { device = "Android" }
         // iPadOS Safari reports itself as a Mac.
-        if userAgent.contains("Macintosh") { return "iPad / Mac" }
-        return "Tarayıcı"
+        else if userAgent.contains("Macintosh") { device = "iPad / Mac" }
+        else { device = "Tarayıcı" }
+
+        let browser: String?
+        // Order matters: Edge and Chrome also claim to be Safari, Edge also Chrome.
+        if userAgent.contains("EdgiOS") || userAgent.contains("Edg/") || userAgent.contains("EdgA/") { browser = "Edge" }
+        else if userAgent.contains("FxiOS") || userAgent.contains("Firefox/") { browser = "Firefox" }
+        else if userAgent.contains("CriOS") || userAgent.contains("Chrome/") { browser = "Chrome" }
+        else if userAgent.contains("Safari/") { browser = "Safari" }
+        else { browser = nil }
+
+        return [device, browser].compactMap { $0 }.joined(separator: " — ")
+    }
+
+    /// "192.168.1.31" from an endpoint description like "192.168.1.31:54978"
+    /// or "[fe80::1%en0]:54978".
+    private static func host(fromEndpoint endpoint: String) -> String {
+        if endpoint.hasPrefix("["), let close = endpoint.firstIndex(of: "]") {
+            return String(endpoint[endpoint.index(after: endpoint.startIndex)..<close])
+        }
+        if let colon = endpoint.lastIndex(of: ":") {
+            return String(endpoint[..<colon])
+        }
+        return endpoint
     }
 
     private func report(_ state: State) {

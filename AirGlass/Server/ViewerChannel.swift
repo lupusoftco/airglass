@@ -11,9 +11,13 @@ final class ViewerChannel {
     static let pollTimeout: TimeInterval = 20
     /// Without a pending poll for this long, the viewer is considered gone
     /// (tab closed, phone locked, network lost).
-    static let idleTimeout: TimeInterval = 8
+    /// Long enough to ride out a brief Wi-Fi hiccup or app switch.
+    static let idleTimeout: TimeInterval = 15
 
+    /// "iPhone — Safari"
     let deviceName: String
+    /// The viewer's IP address.
+    let remoteAddress: String
 
     /// Called on the main thread, in arrival order.
     var onMessage: (([String: Any]) -> Void)?
@@ -33,8 +37,9 @@ final class ViewerChannel {
     private let watchdog: DispatchSourceTimer
 
     /// Must be called on `queue`.
-    init(deviceName: String, queue: DispatchQueue) {
+    init(deviceName: String, remoteAddress: String, queue: DispatchQueue) {
         self.deviceName = deviceName
+        self.remoteAddress = remoteAddress
         self.queue = queue
         watchdog = DispatchSource.makeTimerSource(queue: queue)
         watchdog.schedule(deadline: .now() + 2, repeating: 2)
