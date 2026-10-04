@@ -6,6 +6,13 @@
 </p>
 
 <p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/hero-dark.png">
+    <img src="docs/screenshots/hero-light.png" alt="AirGlass: menü çubuğu popover'ı ve iPhone'da yayın / menu bar popover and the live stream on an iPhone" width="560">
+  </picture>
+</p>
+
+<p align="center">
   <b>Türkçe</b> · <a href="#english">English</a>
 </p>
 
@@ -47,13 +54,45 @@ AirGlass, Mac'inin ekranını ya da tek bir pencereyi aynı Wi-Fi'deki bir telef
 5. İlk kez bir kaynak seçtiğinde macOS **Ekran Kaydı** izni ister. **Sistem Ayarları → Gizlilik ve Güvenlik → Ekran ve Sistem Sesi Kaydı** bölümünden AirGlass'a izin ver, sonra AirGlass'ı kapatıp yeniden aç.
 6. macOS **yerel ağ** erişimi ve güvenlik duvarı açıksa **gelen bağlantılar** için izin isteyebilir. İkisine de izin ver; telefon Mac'e bunlar sayesinde ulaşır.
 
-### Kullanım
+### Nasıl çalışır
 
-1. Menü çubuğundaki AirGlass ikonuna tıkla.
-2. **Tüm ekran** ya da **Pencere seç** ile neyin yansıtılacağını seç.
-3. QR kodu telefonunun kamerasıyla okut ve açılan bağlantıya dokun.
-4. Görüntüye dokununca tam ekrana geçer. Telefonu yan çevirebilirsin.
-5. Bitirmek için popover'da **Bağlantıyı kes**'e bas.
+**1. Kaynağı seç ve QR kodu okut.** Menü çubuğundaki AirGlass ikonuna tıkla. **Tüm ekran** ya da **Pencere seç** ile neyin yansıtılacağını seç, sonra QR kodu telefonunun kamerasıyla okutup açılan bağlantıya dokun.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/popover-waiting-dark.png">
+    <img src="docs/screenshots/popover-waiting-light.png" alt="Bekleyen popover: QR kod, Linki kopyala, kaynak seçimi" width="280">
+  </picture>
+</p>
+
+**2. Telefon bağlanır.** Safari açılır ve Mac'e bağlanır; telefona hiçbir şey kurulmaz.
+
+<p align="center">
+  <img src="docs/screenshots/phone-connecting.png" alt="Telefonda Bağlanıyor ekranı" width="180">
+</p>
+
+**3. Ekranın telefonda.** Görüntü yerel ağ üzerinden, şifreli olarak gelir. Görüntüye dokununca tam ekrana geçer; telefonu yan da çevirebilirsin.
+
+<p align="center">
+  <img src="docs/screenshots/phone-live.png" alt="Telefonda yayın, dikey ve yatay" width="560">
+</p>
+
+**4. Bitirmek için Bağlantıyı kes.** Biri izlerken popover bağlı cihazı gösterir ve menü çubuğu ikonu değişir.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/popover-connected-dark.png">
+    <img src="docs/screenshots/popover-connected-light.png" alt="Bağlı popover: cihaz, yayınlanan pencere, Bağlantıyı kes" width="280">
+  </picture>
+</p>
+
+**5. Yeni QR.** Telefon "Bağlantı kesildi" der. QR kod tek kullanımlık olduğu için Mac'te hemen yeni bir QR kod belirir.
+
+<p align="center">
+  <img src="docs/screenshots/phone-disconnected.png" alt="Telefonda Bağlantı kesildi ekranı" width="180">
+</p>
+
+<sub>Görseller AirGlass'ın arayüz tasarımından üretilmiştir.</sub>
 
 ### Kaynaktan derleme
 
@@ -130,13 +169,45 @@ AirGlass is a small, open-source macOS menu bar app that mirrors your Mac's scre
 5. The first time you pick a source, macOS asks for **Screen Recording** permission. Allow AirGlass under **System Settings → Privacy & Security → Screen & System Audio Recording**, then quit and reopen AirGlass.
 6. macOS may also ask for **local network** access and, if the firewall is on, for **incoming connections**. Allow both; they are how the phone reaches the Mac.
 
-### Usage
+### How it works
 
-1. Click the AirGlass icon in the menu bar.
-2. Choose **Tüm ekran** (whole screen) or **Pencere seç** (pick a window).
-3. Scan the QR code with your phone's camera and tap the link.
-4. Tap the picture to go fullscreen. Rotating the phone works too.
-5. Press **Bağlantıyı kes** in the popover to stop.
+**1. Pick a source and scan the QR code.** Click the AirGlass icon in the menu bar. Choose **Tüm ekran** (whole screen) or **Pencere seç** (pick a window), then scan the QR code with your phone's camera and tap the link.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/popover-waiting-dark.png">
+    <img src="docs/screenshots/popover-waiting-light.png" alt="Waiting popover: QR code, copy link, source picker" width="280">
+  </picture>
+</p>
+
+**2. The phone connects.** Safari opens and connects to the Mac; nothing is installed on the phone.
+
+<p align="center">
+  <img src="docs/screenshots/phone-connecting.png" alt="Connecting screen on the phone" width="180">
+</p>
+
+**3. Your screen, on the phone.** The picture arrives encrypted over your local network. Tap it to go fullscreen; rotating the phone works too.
+
+<p align="center">
+  <img src="docs/screenshots/phone-live.png" alt="Live stream on the phone, portrait and landscape" width="560">
+</p>
+
+**4. Press Bağlantıyı kes (Disconnect) to stop.** While someone is watching, the popover shows the connected device and the menu bar icon changes.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/popover-connected-dark.png">
+    <img src="docs/screenshots/popover-connected-light.png" alt="Connected popover: device, shared window, Disconnect" width="280">
+  </picture>
+</p>
+
+**5. A new QR code.** The phone shows "Bağlantı kesildi" (Disconnected). The QR code works only once, so the Mac shows a fresh one right away.
+
+<p align="center">
+  <img src="docs/screenshots/phone-disconnected.png" alt="Disconnected screen on the phone" width="180">
+</p>
+
+<sub>Images are rendered from AirGlass's interface design.</sub>
 
 ### Building from source
 
