@@ -1,0 +1,9 @@
+// Copy this file to Config/Local.xcconfig (git-ignored) and fill in your team.
+// Find the ID in Xcode → Settings → Accounts → (your Apple ID) → Personal Team,
+// or in Keychain Access under the "Apple Development: …" certificate (OU field).
+
+DEVELOPMENT_TEAM = ABCDE12345
+CODE_SIGN_IDENTITY = Apple Development
+
+// Personal Team bundle IDs must be unique; change this if signing complains.
+// PRODUCT_BUNDLE_IDENTIFIER = com.yourname.AirGlass

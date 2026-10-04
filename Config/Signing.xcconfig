@@ -1,0 +1,12 @@
+// Default: ad-hoc signing ("Sign to Run Locally"). Builds anywhere, but macOS
+// forgets the Screen Recording permission after every rebuild.
+//
+// To keep the permission across builds, copy Local.xcconfig.example to
+// Local.xcconfig and put your free "Personal Team" ID in it.
+
+PRODUCT_BUNDLE_IDENTIFIER = com.lupusoft.AirGlass
+CODE_SIGN_STYLE = Automatic
+CODE_SIGN_IDENTITY = -
+DEVELOPMENT_TEAM =
+
+#include? "Local.xcconfig"
