@@ -29,9 +29,6 @@ final class AppState {
     /// Mirrors `tokens.current` so the QR code refreshes when it rotates.
     private(set) var token: String
 
-    /// TEMPORARY: shows the on-screen debug log on the phone. Remove before release.
-    static let viewerDebugLog = true
-
     @ObservationIgnored let capturer = ScreenCapturer()
     @ObservationIgnored private let pipeline = VideoPipeline()
     @ObservationIgnored private let tokens: TokenStore
@@ -48,7 +45,7 @@ final class AppState {
     /// fragment so it is never sent in an HTTP request.
     var viewerURL: String? {
         guard let localAddress, case .ready(let port) = serverState else { return nil }
-        return "http://\(localAddress):\(port)/#\(token)\(Self.viewerDebugLog ? "&debug" : "")"
+        return "http://\(localAddress):\(port)/#\(token)"
     }
 
     /// Why there is no QR code, if there isn't one.
@@ -86,13 +83,12 @@ final class AppState {
         addressMonitor.start()
     }
 
+    /// The server has accepted a viewer: its token is spent and no other
+    /// viewer can join until this one is gone.
     private func viewerConnected(_ channel: ViewerChannel) {
-        // The one-viewer / one-time-token rules arrive in milestone 5; for
-        // now a newer viewer simply replaces the previous one.
-        session?.end()
-
-        guard let session = PeerSession(channel: channel, pipeline: pipeline) else {
+        guard session == nil, let session = PeerSession(channel: channel, pipeline: pipeline) else {
             channel.close()
+            issueNewToken()
             return
         }
         session.onEnd = { [weak self, weak session] in
@@ -100,11 +96,17 @@ final class AppState {
                 guard let self, self.session === session else { return }
                 self.session = nil
                 self.connection = .waiting
+                self.issueNewToken()
             }
         }
         self.session = session
         connection = .connected(deviceName: channel.deviceName)
         session.start()
+    }
+
+    /// Every disconnect gets a fresh token, and with it a fresh QR code.
+    private func issueNewToken() {
+        token = tokens.rotate()
     }
 
     func copyViewerURL() {
@@ -128,9 +130,8 @@ final class AppState {
         NSWorkspace.shared.open(url)
     }
 
+    /// Ends the viewer's session; `onEnd` then issues a new QR code.
     func disconnect() {
         session?.end()
-        session = nil
-        connection = .waiting
     }
 }

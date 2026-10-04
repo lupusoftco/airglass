@@ -25,10 +25,22 @@ final class TokenStore: @unchecked Sendable {
         return newToken
     }
 
-    /// Constant-time comparison so response timing reveals nothing.
-    func isValid(_ candidate: String) -> Bool {
-        let expected = Array(current.utf8)
-        let given = Array(candidate.utf8)
+    /// One-time use: if `candidate` is the current token, replaces it with
+    /// a fresh one and returns true. Check and replacement are atomic, so
+    /// the same token can never be accepted twice.
+    func consume(_ candidate: String) -> Bool {
+        lock.withLock {
+            guard Self.constantTimeEquals(token, candidate) else { return false }
+            token = Self.generate()
+            return true
+        }
+    }
+
+    /// Comparison time does not depend on where the strings differ, so
+    /// response timing reveals nothing about the token.
+    private static func constantTimeEquals(_ lhs: String, _ rhs: String) -> Bool {
+        let expected = Array(lhs.utf8)
+        let given = Array(rhs.utf8)
         guard expected.count == given.count else { return false }
         var difference: UInt8 = 0
         for index in expected.indices {

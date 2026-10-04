@@ -9,8 +9,18 @@
   <link rel="stylesheet" href="viewer.css">
 </head>
 <body>
-  <video id="video" autoplay playsinline muted></video>
+  <video id="video" autoplay playsinline muted disablepictureinpicture></video>
   <p id="status" role="status">Bağlanıyor…</p>
+
+  <button id="fullscreen" class="overlay-button" type="button" aria-label="Tam ekran" hidden>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg>
+  </button>
+
+  <button id="debug-toggle" class="overlay-button" type="button" aria-label="Günlüğü göster" aria-pressed="false">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h9"/></svg>
+  </button>
+  <div id="debug" hidden></div>
+
   <script src="viewer.js"></script>
 </body>
 </html>

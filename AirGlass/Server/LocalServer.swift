@@ -177,8 +177,14 @@ final class LocalServer {
     }
 
     private func hello(_ request: HTTPRequest, on http: HTTPConnection) {
-        guard let token = request.jsonObject?["token"] as? String, tokens.isValid(token) else {
-            return forbid(http, "hello with a wrong token or malformed body")
+        // One viewer at a time: while someone is watching, nobody else gets in,
+        // whatever they present.
+        guard channels.isEmpty else {
+            return forbid(http, "hello while a viewer is already connected")
+        }
+        // The token is consumed here; the QR code it came from is now dead.
+        guard let token = request.jsonObject?["token"] as? String, tokens.consume(token) else {
+            return forbid(http, "hello with a wrong or already used token, or a malformed body")
         }
 
         let deviceName = Self.deviceName(fromUserAgent: request.headers["user-agent"])

@@ -1,33 +1,39 @@
 "use strict";
 
 (() => {
-  // URL fragment: "#<token>" or "#<token>&debug". The fragment never reaches
-  // the server in an HTTP request.
-  const [rawToken = "", ...flags] = location.hash.slice(1).split("&");
-  const token = decodeURIComponent(rawToken);
-  const debug = flags.includes("debug");
-  // Remove the token from the address bar and history right away so it
+  // URL fragment: "#<token>". It never reaches the server in an HTTP
+  // request. Remove it from the address bar and history right away so it
   // cannot be copied or reopened.
+  const token = decodeURIComponent(location.hash.slice(1).split("&")[0]);
   history.replaceState(null, "", location.pathname);
 
-  // --- Debug log (temporary) -------------------------------------------
+  // --- Diagnostics log ---------------------------------------------------
+  //
+  // Always collected; the panel starts hidden and shows everything since the
+  // page loaded when opened with the button in the corner.
 
-  const debugEl = debug ? document.createElement("div") : null;
-  if (debugEl) {
-    debugEl.id = "debug";
-    document.body.appendChild(debugEl);
-  }
+  const debugEl = document.getElementById("debug");
+  const debugToggle = document.getElementById("debug-toggle");
+  const maxLogLines = 1000;
 
   const log = (text) => {
     const line = `${new Date().toISOString().slice(11, 23)} ${text}`;
     console.log(line);
-    if (!debugEl) return;
     const row = document.createElement("div");
     row.textContent = line;
     debugEl.appendChild(row);
-    while (debugEl.childElementCount > 300) debugEl.firstChild.remove();
-    debugEl.scrollTop = debugEl.scrollHeight;
+    while (debugEl.childElementCount > maxLogLines) debugEl.firstChild.remove();
+    if (!debugEl.hidden) debugEl.scrollTop = debugEl.scrollHeight;
   };
+
+  debugToggle.addEventListener("click", (event) => {
+    event.stopPropagation();
+    debugEl.hidden = !debugEl.hidden;
+    debugToggle.setAttribute("aria-pressed", String(!debugEl.hidden));
+    if (!debugEl.hidden) debugEl.scrollTop = debugEl.scrollHeight;
+  });
+  // Scrolling or selecting in the log must not count as a tap on the video.
+  debugEl.addEventListener("click", (event) => event.stopPropagation());
 
   window.addEventListener("error", (event) => {
     log(`JS HATA: ${event.message} (${(event.filename || "").split("/").pop()}:${event.lineno}:${event.colno})`);
@@ -95,6 +101,7 @@
     ended = true;
     log(`Bitti: ${text}`);
     if (peer) peer.close();
+    exitFullscreen();
     video.srcObject = null;
     setStatus(text);
   };
@@ -143,6 +150,78 @@
       }
     }
   };
+
+  // --- Fullscreen ----------------------------------------------------------
+  //
+  // iPhone Safari only allows real fullscreen for a <video> element, and only
+  // from a user gesture (webkitEnterFullscreen). The first tap goes
+  // fullscreen; afterwards a tap shows a fullscreen button for 3 seconds.
+
+  const fullscreenButton = document.getElementById("fullscreen");
+  let firstTapHandled = false;
+  let hideButtonTimer = null;
+
+  const isFullscreen = () => Boolean(video.webkitDisplayingFullscreen || document.fullscreenElement);
+
+  const enterFullscreen = () => {
+    if (ended || isFullscreen()) return;
+    try {
+      if (video.webkitEnterFullscreen && video.readyState >= 1) {
+        video.webkitEnterFullscreen();
+      } else if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch((error) => log(`Tam ekran reddedildi: ${error.name}`));
+      } else {
+        log("Tam ekran bu tarayıcıda yok veya görüntü henüz hazır değil");
+      }
+    } catch (error) {
+      log(`Tam ekran açılamadı: ${error.name}: ${error.message}`);
+    }
+  };
+
+  function exitFullscreen() {
+    try {
+      if (video.webkitDisplayingFullscreen && video.webkitExitFullscreen) video.webkitExitFullscreen();
+      else if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    } catch {
+      // Already out of fullscreen.
+    }
+  }
+
+  const flashFullscreenButton = () => {
+    if (ended || !video.srcObject || isFullscreen()) return;
+    fullscreenButton.hidden = false;
+    clearTimeout(hideButtonTimer);
+    hideButtonTimer = setTimeout(() => {
+      fullscreenButton.hidden = true;
+    }, 3000);
+  };
+
+  document.addEventListener("click", () => {
+    if (!firstTapHandled && video.srcObject) {
+      firstTapHandled = true;
+      enterFullscreen();
+    } else {
+      flashFullscreenButton();
+    }
+  });
+
+  fullscreenButton.addEventListener("click", (event) => {
+    event.stopPropagation();
+    fullscreenButton.hidden = true;
+    enterFullscreen();
+  });
+
+  video.addEventListener("webkitbeginfullscreen", () => log("Tam ekran açıldı"));
+  video.addEventListener("webkitendfullscreen", () => {
+    log("Tam ekrandan çıkıldı");
+    // iOS pauses the video when leaving its fullscreen player.
+    if (!ended) video.play().catch(() => {});
+  });
+  // A live mirror never stays paused (e.g. paused from the fullscreen player).
+  video.addEventListener("pause", () => {
+    if (!ended && video.srcObject) video.play().catch(() => {});
+  });
+  window.addEventListener("resize", () => log(`Ekran ${innerWidth}×${innerHeight}`));
 
   // --- WebRTC --------------------------------------------------------------
 
