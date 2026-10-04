@@ -5,5 +5,9 @@
 DEVELOPMENT_TEAM = ABCDE12345
 CODE_SIGN_IDENTITY = Apple Development
 
+// One team signs the app and its frameworks, so library validation works:
+// keep the Hardened Runtime's protections.
+ENABLE_HARDENED_RUNTIME = YES
+
 // Personal Team bundle IDs must be unique; change this if signing complains.
 // PRODUCT_BUNDLE_IDENTIFIER = com.yourname.AirGlass

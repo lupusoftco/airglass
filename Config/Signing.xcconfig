@@ -9,4 +9,12 @@ CODE_SIGN_STYLE = Automatic
 CODE_SIGN_IDENTITY = -
 DEVELOPMENT_TEAM =
 
+// The Hardened Runtime enables library validation, which only loads
+// frameworks signed with the app's own Team ID. Ad-hoc signatures have no
+// Team ID, so a hardened ad-hoc build refuses its own WebRTC.framework at
+// launch (the v0.1.0 crash). Only notarization requires the Hardened
+// Runtime, and we do not notarize, so ad-hoc builds go without it.
+// Local.xcconfig turns it back on for team-signed builds.
+ENABLE_HARDENED_RUNTIME = NO
+
 #include? "Local.xcconfig"

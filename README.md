@@ -37,6 +37,12 @@ AirGlass, Mac'inin ekranını ya da tek bir pencereyi aynı Wi-Fi'deki bir telef
    4. Parolanı gir ve çıkan pencerede yine **Yine de Aç**'ı seç.
 
    Bunu yalnızca bir kez yaparsın.
+
+   **Alternatif:** Terminal'de uygulamanın karantina işaretini kaldırırsan macOS onu engellemez:
+
+   ```sh
+   xattr -dr com.apple.quarantine /Applications/AirGlass.app
+   ```
 4. Menü çubuğunda AirGlass ikonu belirir; Dock'ta ikon yoktur.
 5. İlk kez bir kaynak seçtiğinde macOS **Ekran Kaydı** izni ister. **Sistem Ayarları → Gizlilik ve Güvenlik → Ekran ve Sistem Sesi Kaydı** bölümünden AirGlass'a izin ver, sonra AirGlass'ı kapatıp yeniden aç.
 6. macOS **yerel ağ** erişimi ve güvenlik duvarı açıksa **gelen bağlantılar** için izin isteyebilir. İkisine de izin ver; telefon Mac'e bunlar sayesinde ulaşır.
@@ -114,6 +120,12 @@ AirGlass is a small, open-source macOS menu bar app that mirrors your Mac's scre
    4. Enter your password and choose **Open Anyway** again.
 
    You only need to do this once.
+
+   **Alternatively,** remove the quarantine flag in Terminal and macOS won't block the app:
+
+   ```sh
+   xattr -dr com.apple.quarantine /Applications/AirGlass.app
+   ```
 4. The AirGlass icon appears in the menu bar; there is no Dock icon.
 5. The first time you pick a source, macOS asks for **Screen Recording** permission. Allow AirGlass under **System Settings → Privacy & Security → Screen & System Audio Recording**, then quit and reopen AirGlass.
 6. macOS may also ask for **local network** access and, if the firewall is on, for **incoming connections**. Allow both; they are how the phone reaches the Mac.
