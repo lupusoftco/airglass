@@ -1,0 +1,42 @@
+name: Release
+
+# Pushing a tag like v0.1.0 builds the DMG and publishes a GitHub Release
+# with the notes in .github/release-notes/<tag>.md.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Check that the tag matches the app version
+        run: |
+          version=$(grep -E '^\s*MARKETING_VERSION:' project.yml | sed -E 's/.*"([^"]+)".*/\1/')
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match MARKETING_VERSION $version in project.yml" >&2
+            exit 1
+          fi
+
+      - name: Build DMG
+        run: scripts/make-dmg.sh
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          notes=".github/release-notes/$GITHUB_REF_NAME.md"
+          test -f "$notes" || { echo "Missing $notes" >&2; exit 1; }
+          gh release create "$GITHUB_REF_NAME" dist/*.dmg \
+            --title "AirGlass ${GITHUB_REF_NAME#v}" \
+            --notes-file "$notes" \
+            --verify-tag

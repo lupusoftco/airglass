@@ -28,7 +28,7 @@ AirGlass, Mac'inin ekranını ya da tek bir pencereyi aynı Wi-Fi'deki bir telef
 
 ### Kurulum
 
-1. [Releases](https://github.com/lupusoftco/airglass/releases) sayfasından `AirGlass-<sürüm>.dmg` dosyasını indir.
+1. [Releases](https://github.com/lupusoftco/airglass/releases/latest) sayfasından `AirGlass-<sürüm>.dmg` dosyasını indir.
 2. `.dmg`'yi aç ve **AirGlass**'ı **Applications** klasörüne sürükle.
 3. AirGlass'ı aç. Uygulama Apple tarafından onaylanmadığı (notarize edilmediği) için macOS ilk açılışta engeller. Şöyle açabilirsin:
    1. Uyarıda **Bitti**'ye bas.
@@ -105,7 +105,7 @@ AirGlass is a small, open-source macOS menu bar app that mirrors your Mac's scre
 
 ### Installation
 
-1. Download `AirGlass-<version>.dmg` from the [Releases](https://github.com/lupusoftco/airglass/releases) page.
+1. Download `AirGlass-<version>.dmg` from the [Releases](https://github.com/lupusoftco/airglass/releases/latest) page.
 2. Open the `.dmg` and drag **AirGlass** into **Applications**.
 3. Open AirGlass. The app is not notarized by Apple, so macOS blocks the first launch. To open it:
    1. Click **Done** in the warning.
