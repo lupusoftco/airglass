@@ -25,48 +25,17 @@ jobs:
 
     - name: Build Release EXE
       working-directory: ./Windows
-      shell: pwsh
-      run: |
-        dotnet publish `
-          --configuration Release `
-          --runtime win-x64 `
-          --self-contained `
-          --output build/output `
-          -p:PublishSingleFile=true `
-          -p:IncludeNativeLibrariesForSelfExtract=true `
-          -p:PublishReadyToRun=true
+      run: dotnet publish --configuration Release --runtime win-x64 --self-contained --output build/output -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishReadyToRun=true
 
     - name: Create ZIP archive
-      working-directory: ./Windows
-      shell: pwsh
-      run: |
-        $version = "${{ github.event.release.tag_name }}"
-        Compress-Archive -Path build/output -DestinationPath "AirGlass-Windows-$version.zip"
-        Move-Item "AirGlass-Windows-$version.zip" ../
+      working-directory: ./Windows/build/output
+      run: powershell -Command "Compress-Archive -Path . -DestinationPath ../AirGlass-Windows-${{ github.event.release.tag_name }}.zip"
 
-    - name: Upload artifacts to release
+    - name: Upload to Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          Windows/build/output/AirGlass.exe
+          Windows/build/AirGlass-Windows-${{ github.event.release.tag_name }}.zip
       env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      shell: pwsh
-      run: |
-        $version = "${{ github.event.release.tag_name }}"
-        gh release upload $version "Windows/build/output/AirGlass.exe" "AirGlass-Windows-$version.zip" --clobber
-
-    - name: Comment on release
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      shell: pwsh
-      run: |
-        $version = "${{ github.event.release.tag_name }}"
-        gh release view $version --json body --jq .body | Out-Null
-        gh release edit $version --notes "✅ Windows EXE now available!
-
-📥 Download:
-- **AirGlass.exe** - Standalone executable (no installation needed)
-- **AirGlass-Windows-$version.zip** - Packaged release
-
-Simply download and run on Windows 10+ — ready to go!
-
----
-
-" || true
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
