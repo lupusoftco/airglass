@@ -1,6 +1,6 @@
 # AirGlass Windows
 
-**Wireless screen mirroring from Windows PC to iPhone over local Wi-Fi network.**
+**Wireless screen mirroring from your computer to your phone over local Wi-Fi network.**
 
 ![Version](https://img.shields.io/badge/version-0.1.0-blue?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
@@ -11,18 +11,18 @@
 
 ✅ **60 FPS Screen Capture** - Full desktop or window-specific at 60 frames/second  
 ✅ **Hardware H.264 Encoding** - MediaFoundation with codec acceleration  
-✅ **WebRTC Streaming** - Real-time P2P video to iPhone  
-✅ **QR Code Access** - One-scan connection from iPhone  
+✅ **WebRTC Streaming** - Real-time P2P video to your phone  
+✅ **QR Code Access** - One-scan connection from your phone  
 ✅ **Local Network Only** - No cloud, no account needed  
-✅ **Safari Viewer** - Works in iOS Safari (iOS 11+)  
+✅ **Safari Viewer** - Works in Safari on your phone (iOS 11+)  
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- **Windows 10** (build 19041+) or **Windows 11**
+- **Your Computer**: Windows 10 (build 19041+) or Windows 11
 - **.NET 8.0 SDK** → [Download](https://dotnet.microsoft.com/download/dotnet/8.0)
-- **iPhone 6+** with iOS 11+
-- Same local network
+- **Your Phone**: iPhone 6+ with iOS 11+
+- Same local network for both devices
 
 ### 1. Install & Build
 ```bash
@@ -36,10 +36,10 @@ dotnet build -c Release
 dotnet run --project AirGlass.Windows -c Release
 ```
 
-### 3. Connect iPhone
-1. Scan the **QR code** with iPhone camera
+### 3. Connect Your Phone
+1. Scan the **QR code** with your phone's camera
 2. Tap "Open in Safari"
-3. See your Windows screen in full-screen
+3. See your computer screen in full-screen on your phone
 
 ## 📖 Usage
 

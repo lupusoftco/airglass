@@ -28,14 +28,14 @@ AirGlass, bilgisayarının ekranını ya da tek bir pencereyi aynı Wi-Fi'deki b
 
 ### Özellikler
 
-- **Tamamen yerel.** Görüntü Mac'ten telefona doğrudan, yerel ağ üzerinden gider. Uygulama internete hiçbir istek atmaz: analitik yok, güncelleme kontrolü yok, STUN/TURN sunucusu yok.
-- **Şifreli görüntü.** Yayın WebRTC (DTLS-SRTP) ile şifrelenir. Video codec'i H.264'tür; iPhone'da donanımla çözülür.
-- **Uygulama kurmadan izleme.** Telefonda yalnızca Safari (ya da başka bir tarayıcı) yeterli.
+- **Tamamen yerel.** Görüntü bilgisayarınızdan telefonunuza doğrudan, yerel ağ üzerinden gider. Uygulama internete hiçbir istek atmaz: analitik yok, güncelleme kontrolü yok, STUN/TURN sunucusu yok.
+- **Şifreli görüntü.** Yayın WebRTC (DTLS-SRTP) ile şifrelenir. Video codec'i H.264'tür; telefonunuzda donanımla çözülür.
+- **Uygulama kurmadan izleme.** Telefonunuzda yalnızca Safari (ya da başka bir tarayıcı) yeterli.
 - **Tek kullanımlık QR.** QR kodun içindeki anahtar ilk bağlantıda geçersiz olur. Bağlantı kopunca ya da "Bağlantıyı kes"e basınca yeni bir QR üretilir.
 - **Tek izleyici.** Biri izlerken başka bir cihaz bağlanamaz.
-- **Sadece görüntü.** Telefondan Mac'e dokunma, fare ya da klavye girdisi gitmez.
-- **Tüm ekran veya tek pencere.** Seçim macOS'un kendi içerik seçicisiyle yapılır.
-- **Her an görünür.** Biri izlerken menü çubuğundaki ikon değişir.
+- **Sadece görüntü.** Telefonunuzdan bilgisayarınıza dokunma, fare ya da klavye girdisi gitmez.
+- **Tüm ekran veya tek pencere.** Seçim işletim sisteminizin kendi içerik seçicisiyle yapılır.
+- **Her an görünür.** Biri izlerken menü çubuğu veya sistem tepsisindeki ikon değişir.
 
 ### Kurulum
 
@@ -60,7 +60,7 @@ AirGlass, bilgisayarının ekranını ya da tek bir pencereyi aynı Wi-Fi'deki b
 
 ### Nasıl çalışır
 
-**1. Kaynağı seç ve QR kodu okut.** Menü çubuğundaki AirGlass ikonuna tıkla. **Tüm ekran** ya da **Pencere seç** ile neyin yansıtılacağını seç, sonra QR kodu telefonunun kamerasıyla okutup açılan bağlantıya dokun.
+**1. Kaynağı seç ve QR kodu okut.** AirGlass'ı açın. **Tüm ekran** ya da **Pencere seç** ile neyin yansıtılacağını seçin, sonra QR kodu telefonunuzun kamerasıyla okutup açılan bağlantıya dokunun.
 
 <p align="center">
   <picture>
@@ -69,19 +69,19 @@ AirGlass, bilgisayarının ekranını ya da tek bir pencereyi aynı Wi-Fi'deki b
   </picture>
 </p>
 
-**2. Telefon bağlanır.** Safari açılır ve Mac'e bağlanır; telefona hiçbir şey kurulmaz.
+**2. Telefonunuz bağlanır.** Safari açılır ve bilgisayarınıza bağlanır; telefonunuza hiçbir şey kurulmaz.
 
 <p align="center">
   <img src="docs/screenshots/phone-connecting.png" alt="Telefonda Bağlanıyor ekranı" width="180">
 </p>
 
-**3. Ekranın telefonda.** Görüntü yerel ağ üzerinden, şifreli olarak gelir. Görüntüye dokununca tam ekrana geçer; telefonu yan da çevirebilirsin.
+**3. Ekran telefonunuzda.** Görüntü yerel ağ üzerinden, şifreli olarak gelir. Görüntüye dokununca tam ekrana geçer; telefonunuzu yan da çevirebilirsiniz.
 
 <p align="center">
   <img src="docs/screenshots/phone-live.png" alt="Telefonda yayın, dikey ve yatay" width="560">
 </p>
 
-**4. Bitirmek için Bağlantıyı kes.** Biri izlerken popover bağlı cihazı gösterir ve menü çubuğu ikonu değişir.
+**4. Bitirmek için Bağlantıyı kes.** Biri izlerken uygulama bağlı cihazı gösterir ve ikon değişir.
 
 <p align="center">
   <picture>
@@ -195,14 +195,14 @@ AirGlass is a small, open-source app that mirrors your computer's screen, or a s
 
 ### Features
 
-- **Entirely local.** Video goes straight from the Mac to the phone over your local network. The app makes no requests to the internet: no analytics, no update checks, no STUN/TURN servers.
-- **Encrypted video.** The stream uses WebRTC (DTLS-SRTP). The video codec is H.264, which the iPhone decodes in hardware.
-- **Watch without an app.** Safari (or any modern browser) on the phone is all you need.
-- **One-time QR code.** The key inside the QR code stops working after the first connection. A new QR code appears when the viewer disconnects or you press "Bağlantıyı kes" (Disconnect).
+- **Entirely local.** Video goes straight from your computer to your phone over your local network. The app makes no requests to the internet: no analytics, no update checks, no STUN/TURN servers.
+- **Encrypted video.** The stream uses WebRTC (DTLS-SRTP). The video codec is H.264, which your phone decodes in hardware.
+- **Watch without an app.** Safari (or any modern browser) on your phone is all you need.
+- **One-time QR code.** The key inside the QR code stops working after the first connection. A new QR code appears when the viewer disconnects or you press disconnect.
 - **One viewer at a time.** While someone is watching, no other device can connect.
-- **View only.** No touch, mouse or keyboard input goes from the phone to the Mac.
-- **Whole screen or a single window,** chosen with macOS's own content picker.
-- **Always visible.** The menu bar icon changes while someone is watching.
+- **View only.** No touch, mouse or keyboard input goes from your phone to your computer.
+- **Whole screen or a single window,** chosen with your operating system's own content picker.
+- **Always visible.** The icon changes while someone is watching.
 
 ### Installation
 
