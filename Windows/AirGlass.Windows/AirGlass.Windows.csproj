@@ -25,4 +25,12 @@
         <PackageReference Include="QRCoder" Version="1.4.3" />
     </ItemGroup>
 
+    <ItemGroup>
+        <!-- Project references -->
+        <ProjectReference Include="../AirGlass.Capture/AirGlass.Capture.csproj" />
+        <ProjectReference Include="../AirGlass.Encoding/AirGlass.Encoding.csproj" />
+        <ProjectReference Include="../AirGlass.Streaming/AirGlass.Streaming.csproj" />
+        <ProjectReference Include="../AirGlass.Server/AirGlass.Server.csproj" />
+    </ItemGroup>
+
 </Project>
