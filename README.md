@@ -190,8 +190,8 @@ dotnet publish -c Release --runtime win-x64 --self-contained -o build/output
 AirGlass is a small, open-source app that mirrors your computer's screen, or a single window, live to the browser of a phone on the same Wi-Fi. Nothing gets installed on the phone: scan the QR code and the picture opens in Safari.
 
 **🖥️ Supported Platforms:**
-- **macOS** (menu bar app, Swift + SwiftUI)
-- **Windows** (console app, .NET 8 + C#) — **NEW! v0.1.0**
+- **macOS** (menu bar application, Swift + SwiftUI)
+- **Windows** (standalone application, .NET 8 + C#) — **NEW! v0.1.0**
 
 ### Features
 
