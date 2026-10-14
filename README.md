@@ -20,7 +20,11 @@
 
 ## Türkçe
 
-AirGlass, Mac'inin ekranını ya da tek bir pencereyi aynı Wi-Fi'deki bir telefonun tarayıcısına canlı yansıtan, açık kaynak ve minimal bir macOS menü çubuğu uygulamasıdır. Telefona hiçbir şey kurmazsın: QR kodu okutursun, görüntü Safari'de açılır.
+AirGlass, bilgisayarının ekranını ya da tek bir pencereyi aynı Wi-Fi'deki bir iPhone'un tarayıcısına canlı yansıtan, açık kaynak ve minimal bir uygulamadır. Telefona hiçbir şey kurmazsın: QR kodu okutursun, görüntü Safari'de açılır.
+
+**🖥️ Desteklenen Platformlar:**
+- **macOS** (menü çubuğu uygulaması, Swift + SwiftUI)
+- **Windows** (console uygulaması, .NET 8 + C#) — **YENİ! v0.1.0**
 
 ### Özellikler
 
@@ -115,6 +119,54 @@ make clean  # derleme çıktılarını siler
 
 Xcode'da çalışmak istersen `make project` ile `AirGlass.xcodeproj` dosyasını üretip açabilirsin.
 
+---
+
+## Windows Kurulumu
+
+**Windows 10+ (Build 19041) ve Windows 11 desteklenir.**
+
+### Yüksek Hız Kurulumu
+
+1. [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) kur
+2. Repository klonla:
+   ```bash
+   git clone https://github.com/lupusoftco/airglass.git
+   cd airglass
+   git checkout windows-port
+   cd Windows
+   ```
+3. Build et:
+   ```bash
+   dotnet restore
+   dotnet build -c Release
+   ```
+4. Çalıştır:
+   ```bash
+   dotnet run --project AirGlass.Windows
+   ```
+
+### Standalone EXE (Taşınabilir)
+
+```bash
+# Dosya oluştur:
+dotnet publish -c Release --runtime win-x64 --self-contained -o build/output
+
+# Çalıştır:
+./build/output/AirGlass.exe
+```
+
+### Nasıl Kullanılır
+
+1. AirGlass'ı başlat → **start** yaz
+2. QR kod görünür
+3. iPhone'un kamerasıyla tara → Safari'de açılır
+4. Ekran görünür
+5. **stop** yazarak durdur
+
+**Full rehber**: [Windows/README.md](Windows/README.md)
+
+---
+
 ### Bilinen sınırlamalar
 
 - **Mac ve telefon aynı Wi-Fi'de olmalı.** Bağlantı yalnızca yerel ağda kurulur.
@@ -135,7 +187,11 @@ Xcode'da çalışmak istersen `make project` ile `AirGlass.xcodeproj` dosyasın�
 
 ## English
 
-AirGlass is a small, open-source macOS menu bar app that mirrors your Mac's screen, or a single window, live to the browser of a phone on the same Wi-Fi. Nothing gets installed on the phone: scan the QR code and the picture opens in Safari.
+AirGlass is a small, open-source app that mirrors your computer's screen, or a single window, live to the browser of a phone on the same Wi-Fi. Nothing gets installed on the phone: scan the QR code and the picture opens in Safari.
+
+**🖥️ Supported Platforms:**
+- **macOS** (menu bar app, Swift + SwiftUI)
+- **Windows** (console app, .NET 8 + C#) — **NEW! v0.1.0**
 
 ### Features
 
@@ -229,6 +285,54 @@ make clean  # removes build output
 ```
 
 To work in Xcode, run `make project` and open the generated `AirGlass.xcodeproj`.
+
+---
+
+## Windows Installation
+
+**Windows 10+ (Build 19041) and Windows 11 are supported.**
+
+### Quick Start
+
+1. Install [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
+2. Clone and checkout Windows branch:
+   ```bash
+   git clone https://github.com/lupusoftco/airglass.git
+   cd airglass
+   git checkout windows-port
+   cd Windows
+   ```
+3. Build:
+   ```bash
+   dotnet restore
+   dotnet build -c Release
+   ```
+4. Run:
+   ```bash
+   dotnet run --project AirGlass.Windows
+   ```
+
+### Standalone EXE (Portable)
+
+```bash
+# Create executable:
+dotnet publish -c Release --runtime win-x64 --self-contained -o build/output
+
+# Run:
+./build/output/AirGlass.exe
+```
+
+### How to Use
+
+1. Start AirGlass → type **start**
+2. QR code appears
+3. Scan with iPhone camera → opens in Safari
+4. Your screen appears on iPhone
+5. Type **stop** to disconnect
+
+**Full guide**: [Windows/README.md](Windows/README.md)
+
+---
 
 ### Known limitations
 
