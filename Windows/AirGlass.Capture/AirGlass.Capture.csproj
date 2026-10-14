@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+        <UseWindowsDesktop>true</UseWindowsDesktop>
+        <LangVersion>latest</LangVersion>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <!-- Windows Runtime for Graphics.Capture -->
+        <PackageReference Include="System.Runtime.WindowsRuntime" Version="4.10.0" />
+
+        <!-- Windows SDK references -->
+        <PackageReference Include="Windows.Win32" Version="1.0.0-preview.1" />
+
+        <!-- SharpDX for DXGI and Direct3D 11 interop -->
+        <PackageReference Include="SharpDX" Version="4.2.0" />
+        <PackageReference Include="SharpDX.DXGI" Version="4.2.0" />
+        <PackageReference Include="SharpDX.Direct3D11" Version="4.2.0" />
+    </ItemGroup>
+
+</Project>

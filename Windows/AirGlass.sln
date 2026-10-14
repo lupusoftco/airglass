@@ -1,0 +1,42 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34309.116
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AirGlass.Windows", "AirGlass.Windows\AirGlass.Windows.csproj", "{12345678-1234-1234-1234-123456789ABC}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AirGlass.Capture", "AirGlass.Capture\AirGlass.Capture.csproj", "{87654321-4321-4321-4321-ABCDEF123456}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AirGlass.Encoding", "AirGlass.Encoding\AirGlass.Encoding.csproj", "{11111111-2222-3333-4444-555555555555}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AirGlass.Streaming", "AirGlass.Streaming\AirGlass.Streaming.csproj", "{66666666-7777-8888-9999-AAAAAAAAAAAA}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AirGlass.Server", "AirGlass.Server\AirGlass.Server.csproj", "{BBBBBBBB-CCCC-DDDD-EEEE-FFFFFFFFFFFF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{12345678-1234-1234-1234-123456789ABC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{12345678-1234-1234-1234-123456789ABC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{12345678-1234-1234-1234-123456789ABC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{12345678-1234-1234-1234-123456789ABC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{87654321-4321-4321-4321-ABCDEF123456}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{87654321-4321-4321-4321-ABCDEF123456}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{87654321-4321-4321-4321-ABCDEF123456}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{87654321-4321-4321-4321-ABCDEF123456}.Release|Any CPU.Build.0 = Release|Any CPU
+		{11111111-2222-3333-4444-555555555555}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{11111111-2222-3333-4444-555555555555}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{11111111-2222-3333-4444-555555555555}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{11111111-2222-3333-4444-555555555555}.Release|Any CPU.Build.0 = Release|Any CPU
+		{66666666-7777-8888-9999-AAAAAAAAAAAA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{66666666-7777-8888-9999-AAAAAAAAAAAA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{66666666-7777-8888-9999-AAAAAAAAAAAA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{66666666-7777-8888-9999-AAAAAAAAAAAA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BBBBBBBB-CCCC-DDDD-EEEE-FFFFFFFFFFFF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BBBBBBBB-CCCC-DDDD-EEEE-FFFFFFFFFFFF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BBBBBBBB-CCCC-DDDD-EEEE-FFFFFFFFFFFF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BBBBBBBB-CCCC-DDDD-EEEE-FFFFFFFFFFFF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

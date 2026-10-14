@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+        <UseWindowsDesktop>true</UseWindowsDesktop>
+        <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+
+        <!-- Project metadata -->
+        <AssemblyName>AirGlass</AssemblyName>
+        <RootNamespace>AirGlass</RootNamespace>
+        <Version>0.1.0</Version>
+        <Company>Lupus Yazılım</Company>
+        <Product>AirGlass</Product>
+        <Description>Wireless screen mirroring from Windows to iPhone</Description>
+        <Authors>Burak</Authors>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <!-- Core libraries -->
+        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
+        <PackageReference Include="NLog" Version="5.3.4" />
+
+        <!-- QR Code generation -->
+        <PackageReference Include="QRCoder" Version="1.4.3" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- Project references -->
+        <ProjectReference Include="../AirGlass.Capture/AirGlass.Capture.csproj" />
+        <ProjectReference Include="../AirGlass.Encoding/AirGlass.Encoding.csproj" />
+        <ProjectReference Include="../AirGlass.Streaming/AirGlass.Streaming.csproj" />
+        <ProjectReference Include="../AirGlass.Server/AirGlass.Server.csproj" />
+    </ItemGroup>
+
+</Project>
