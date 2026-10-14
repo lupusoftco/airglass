@@ -24,7 +24,7 @@ AirGlass, bilgisayarının ekranını ya da tek bir pencereyi aynı Wi-Fi'deki b
 
 **🖥️ Desteklenen Platformlar:**
 - **macOS** (menü çubuğu uygulaması, Swift + SwiftUI)
-- **Windows** (console uygulaması, .NET 8 + C#) — **YENİ! v0.1.0**
+- **Windows** (bağımsız uygulama, .NET 8 + C#) — **YENİ! v0.1.0**
 
 ### Özellikler
 
