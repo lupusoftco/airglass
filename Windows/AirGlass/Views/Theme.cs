@@ -36,7 +36,7 @@ public static class Theme
         Set("ShadowColor", 0x000000, light ? 0.22 : 0.55, asColor: true);
     }
 
-    private static void Set(string key, uint rgb, double alpha = 1, bool asColor = false)
+    private static void Set(string key, int rgb, double alpha = 1, bool asColor = false)
     {
         var color = Color.FromArgb(
             (byte)System.Math.Round(alpha * 255),
