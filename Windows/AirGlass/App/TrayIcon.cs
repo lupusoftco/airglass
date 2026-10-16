@@ -61,7 +61,7 @@ public sealed class TrayIcon : IDisposable
 
     private void OnStateChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(AppState.IsStreaming)) Refresh();
+        if (e.PropertyName == nameof(AppState.ViewerDevice)) Refresh();
     }
 
     public void Dispose()

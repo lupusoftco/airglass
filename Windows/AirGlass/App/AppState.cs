@@ -1,6 +1,8 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows;
+using AirGlass.Server;
+using AirGlass.Support;
 
 namespace AirGlass;
 
@@ -11,7 +13,7 @@ public enum CaptureMode
     Window,
 }
 
-/// <summary>The popover designs (the same four as on macOS; Windows needs no
+/// <summary>The popover designs (the same as on macOS; Windows needs no
 /// screen recording permission, so that one never appears here).</summary>
 public enum PopoverMode
 {
@@ -22,12 +24,33 @@ public enum PopoverMode
 
 /// <summary>
 /// Single source of truth for the UI, mirroring the macOS AppState. Capture,
-/// server and WebRTC layers report into this object in later milestones.
+/// server and WebRTC layers report into this object.
 /// </summary>
 public sealed class AppState : INotifyPropertyChanged
 {
+    private readonly TokenStore _tokens = new();
+    private readonly LocalServer _server;
+    private readonly LocalAddressMonitor _addressMonitor = new();
+    private ViewerChannel? _viewer;
+
     private CaptureMode _captureMode = CaptureMode.FullScreen;
-    private bool _isStreaming;
+    private ServerState _serverState = new ServerState.Starting();
+    private string? _localAddress;
+    private string _token;
+    private string? _viewerDevice;
+    private string? _viewerAddress;
+
+    public AppState()
+    {
+        _token = _tokens.Current;
+        _server = new LocalServer(_tokens);
+        _server.StateChanged += state => ServerState = state;
+        _server.ViewerConnected += OnViewerConnected;
+        _addressMonitor.Changed += address => LocalAddress = address;
+
+        _server.Start();
+        _addressMonitor.Start();
+    }
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -37,30 +60,117 @@ public sealed class AppState : INotifyPropertyChanged
         private set => SetField(ref _captureMode, value);
     }
 
-    /// <summary>True while a phone is watching; the tray icon changes.</summary>
-    public bool IsStreaming
+    public ServerState ServerState
     {
-        get => _isStreaming;
-        private set => SetField(ref _isStreaming, value);
+        get => _serverState;
+        private set => SetField(ref _serverState, value);
     }
 
-    public PopoverMode PopoverMode => PopoverMode.Waiting;
+    public string? LocalAddress
+    {
+        get => _localAddress;
+        private set => SetField(ref _localAddress, value);
+    }
 
-    /// <summary>URL encoded in the QR code. Placeholder until the local server exists.</summary>
-    public string ViewerUrl => "http://192.168.1.2:3131/#placeholder-token";
+    /// <summary>Mirrors the token store so the QR code refreshes when it rotates.</summary>
+    public string Token
+    {
+        get => _token;
+        private set => SetField(ref _token, value);
+    }
 
-    /// <summary>"192.168.1.2:3131", shown under the QR code (without the token).</summary>
-    public string ViewerHost => "192.168.1.2:3131";
+    /// <summary>"iPhone — Safari" while a phone is watching.</summary>
+    public string? ViewerDevice
+    {
+        get => _viewerDevice;
+        private set => SetField(ref _viewerDevice, value);
+    }
+
+    /// <summary>The watching phone's IP address.</summary>
+    public string? ViewerAddress
+    {
+        get => _viewerAddress;
+        private set => SetField(ref _viewerAddress, value);
+    }
+
+    /// <summary>True while a phone is watching; the tray icon changes.</summary>
+    public bool IsStreaming => _viewerDevice != null;
+
+    public PopoverMode PopoverMode
+    {
+        get
+        {
+            if (IsStreaming) return PopoverMode.Connected;
+            if (OfflineMessage != null) return PopoverMode.Offline;
+            return PopoverMode.Waiting;
+        }
+    }
+
+    /// <summary>Why there is no QR code, if there isn't one.</summary>
+    public string? OfflineMessage
+    {
+        get
+        {
+            if (_serverState is ServerState.Failed) return "Yerel sunucu başlatılamadı";
+            if (_localAddress == null) return "Wi-Fi veya Ethernet bağlantısı yok";
+            if (ViewerUrl == null) return "Yerel sunucu başlatılıyor…";
+            return null;
+        }
+    }
+
+    /// <summary>"192.168.1.24:3131", shown under the QR code (without the token).</summary>
+    public string? ViewerHost =>
+        _localAddress != null && _serverState is ServerState.Ready ready ? $"{_localAddress}:{ready.Port}" : null;
+
+    /// <summary>What the QR code encodes: the page on this PC, with the token in
+    /// the fragment so it is never sent in an HTTP request.</summary>
+    public string? ViewerUrl => ViewerHost is { } host ? $"http://{host}/#{_token}" : null;
+
+    /// <summary>The server has accepted a viewer: its token is spent and no
+    /// other viewer can join until this one is gone.</summary>
+    private void OnViewerConnected(ViewerChannel channel)
+    {
+        if (_viewer != null)
+        {
+            channel.Close();
+            IssueNewToken();
+            return;
+        }
+        _viewer = channel;
+        channel.Closed += () =>
+        {
+            if (_viewer != channel) return;
+            _viewer = null;
+            ViewerAddress = null;
+            ViewerDevice = null;
+            IssueNewToken();
+        };
+        Log.App($"Viewer connected: {channel.DeviceName} ({channel.RemoteAddress})");
+        ViewerAddress = channel.RemoteAddress;
+        ViewerDevice = channel.DeviceName;
+    }
+
+    /// <summary>Every disconnect gets a fresh token, and with it a fresh QR code.</summary>
+    private void IssueNewToken()
+    {
+        Token = _tokens.Rotate();
+    }
 
     public void ChooseSource(CaptureMode mode)
     {
-        // The system capture picker arrives in the next milestone.
+        // The system capture picker arrives with screen capture (W3).
         CaptureMode = mode;
+    }
+
+    /// <summary>Ends the viewer's session; a new QR code follows.</summary>
+    public void Disconnect()
+    {
+        _viewer?.Close();
     }
 
     public void CopyViewerUrl()
     {
-        Clipboard.SetText(ViewerUrl);
+        if (ViewerUrl is { } url) Clipboard.SetText(url);
     }
 
     private void SetField<T>(ref T field, T value, [CallerMemberName] string? name = null)

@@ -24,6 +24,9 @@ public partial class PopoverWindow : Window
     private readonly AppState _state;
     private readonly DispatcherTimer _copyReset = new() { Interval = TimeSpan.FromSeconds(1.6) };
     private DateTime _lastHidden = DateTime.MinValue;
+    /// <summary>Where the tray icon was clicked; the panel stays anchored there
+    /// when its height changes (e.g. a phone connects while it is open).</summary>
+    private System.Drawing.Point _anchor;
 
     public event Action? QuitRequested;
 
@@ -40,6 +43,10 @@ public partial class PopoverWindow : Window
         };
 
         Deactivated += (_, _) => HideNow();
+        SizeChanged += (_, _) =>
+        {
+            if (IsVisible) PlaceNearTray();
+        };
         PreviewKeyDown += OnKeyDown;
         Render();
     }
@@ -57,6 +64,7 @@ public partial class PopoverWindow : Window
         if (DateTime.UtcNow - _lastHidden < TimeSpan.FromMilliseconds(300)) return;
 
         Render();
+        _anchor = Forms.Cursor.Position;
         Opacity = 0;
         Show();
         PlaceNearTray();
@@ -71,12 +79,51 @@ public partial class PopoverWindow : Window
         Hide();
     }
 
+    private string? _renderedUrl;
+
     private void Render()
     {
-        QrImage.Source = QrCodeImage.Create(_state.ViewerUrl);
-        HostText.Text = _state.ViewerHost;
-        FullScreenSegment.IsChecked = _state.CaptureMode == CaptureMode.FullScreen;
-        WindowSegment.IsChecked = _state.CaptureMode == CaptureMode.Window;
+        var mode = _state.PopoverMode;
+        WaitingPanel.Visibility = mode == PopoverMode.Waiting ? Visibility.Visible : Visibility.Collapsed;
+        ConnectedPanel.Visibility = mode == PopoverMode.Connected ? Visibility.Visible : Visibility.Collapsed;
+        OfflinePanel.Visibility = mode == PopoverMode.Offline ? Visibility.Visible : Visibility.Collapsed;
+
+        // Status badge: hollow dot when waiting or offline, green when live.
+        StatusText.Text = mode switch
+        {
+            PopoverMode.Connected => "Yayında",
+            PopoverMode.Offline => "Çevrimdışı",
+            _ => "Bekliyor",
+        };
+        if (mode == PopoverMode.Connected)
+        {
+            StatusDot.SetResourceReference(System.Windows.Shapes.Shape.FillProperty, "GreenBrush");
+            StatusDot.StrokeThickness = 0;
+        }
+        else
+        {
+            StatusDot.Fill = null;
+            StatusDot.StrokeThickness = 1.5;
+        }
+
+        var url = _state.ViewerUrl;
+        if (url != _renderedUrl)
+        {
+            _renderedUrl = url;
+            QrImage.Source = url != null ? QrCodeImage.Create(url) : null;
+        }
+        HostText.Text = _state.ViewerHost ?? "";
+        CopyButton.IsEnabled = url != null;
+        OfflineText.Text = _state.OfflineMessage ?? "";
+
+        DeviceText.Text = _state.ViewerDevice ?? "";
+        DeviceAddressText.Text = $"Bağlı · {_state.ViewerAddress}";
+
+        var fullScreen = _state.CaptureMode == CaptureMode.FullScreen;
+        FullScreenSegment.IsChecked = fullScreen;
+        WindowSegment.IsChecked = !fullScreen;
+        ConnectedFullScreenSegment.IsChecked = fullScreen;
+        ConnectedWindowSegment.IsChecked = !fullScreen;
     }
 
     private void OnStateChanged(object? sender, PropertyChangedEventArgs e)
@@ -117,6 +164,8 @@ public partial class PopoverWindow : Window
 
     private void OnWindowSegment(object sender, RoutedEventArgs e) => _state.ChooseSource(CaptureMode.Window);
 
+    private void OnDisconnect(object sender, RoutedEventArgs e) => _state.Disconnect();
+
     private void OnAbout(object sender, RoutedEventArgs e)
     {
         HideNow();
@@ -149,7 +198,7 @@ public partial class PopoverWindow : Window
     /// </summary>
     private void PlaceNearTray()
     {
-        var cursor = Forms.Cursor.Position;
+        var cursor = _anchor;
         var screen = Forms.Screen.FromPoint(cursor);
         var work = screen.WorkingArea;
         var bounds = screen.Bounds;
