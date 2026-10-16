@@ -1,0 +1,113 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- The system UI font; the macOS app uses SF, its native counterpart. -->
+  <FontFamily x:Key="UIFont">Segoe UI Variable Text, Segoe UI</FontFamily>
+  <FontFamily x:Key="MonoFont">Cascadia Mono, Consolas</FontFamily>
+  <FontFamily x:Key="IconFont">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
+
+  <!-- AirGlass logo (Branding), as vector paths in a 510×470 box. -->
+  <Canvas x:Key="LogoCanvas" x:Shared="False" Width="510" Height="470">
+    <Path Fill="{DynamicResource AccentBrush}" Opacity="0.3" Data="M38 180 L30 182 L22 185 L12 192 L5 202 L2 210 L0 218 L0 432 L2 440 L5 448 L10 455 L15 460 L22 465 L30 468 L42 470 L378 470 L390 468 L398 465 L403 462 L181 462 L174 461 L161 457 L155 454 L144 446 L134 436 L126 425 L121 412 L118 399 L118 180Z" />
+    <Path Fill="{DynamicResource AccentBrush}" Opacity="0.58" Data="M188 100 L179 101 L170 104 L158 111 L151 118 L146 125 L142 134 L140 143 L140 392 L142 406 L148 419 L154 426 L165 434 L174 438 L188 440 L402 440 L416 438 L429 432 L332 432 L318 431 L304 426 L291 420 L280 410 L270 399 L264 386 L261 379 L259 372 L258 358 L258 100Z" />
+    <Path Fill="{DynamicResource AccentBrush}" Data="M463 0 L332 0 L322 1 L317 2 L307 6 L299 12 L292 19 L289 23 L284 32 L282 37 L281 42 L280 52 L280 363 L281 368 L284 378 L286 383 L292 391 L299 398 L303 401 L312 406 L317 408 L327 410 L332 410 L458 410 L468 409 L478 406 L483 404 L491 398 L498 391 L501 387 L506 378 L508 373 L510 363 L510 358 L510 47 L508 37 L504 27 L498 19 L491 12 L483 6 L473 2Z" />
+  </Canvas>
+
+  <!-- Full-width rounded button on a tinted fill (13 pt medium). -->
+  <Style x:Key="ControlButton" TargetType="Button">
+    <Setter Property="Background" Value="{DynamicResource ControlBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+    <Setter Property="FontFamily" Value="{DynamicResource UIFont}" />
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="FontWeight" Value="Medium" />
+    <Setter Property="Height" Value="28" />
+    <Setter Property="Cursor" Value="Arrow" />
+    <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Border x:Name="Root" Background="{TemplateBinding Background}" CornerRadius="8">
+            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsPressed" Value="True">
+              <Setter TargetName="Root" Property="Opacity" Value="0.7" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+              <Setter TargetName="Root" Property="Opacity" Value="0.5" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- One half of the "Tüm ekran / Pencere seç" control. -->
+  <Style x:Key="SegmentButton" TargetType="ToggleButton">
+    <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+    <Setter Property="FontFamily" Value="{DynamicResource UIFont}" />
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="FontWeight" Value="Medium" />
+    <Setter Property="Height" Value="24" />
+    <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ToggleButton">
+          <Border x:Name="Root" Background="Transparent" CornerRadius="6">
+            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsChecked" Value="True">
+              <Setter TargetName="Root" Property="Background" Value="{DynamicResource SegmentSelectedBrush}" />
+              <Setter TargetName="Root" Property="Effect">
+                <Setter.Value>
+                  <DropShadowEffect BlurRadius="3" ShadowDepth="1" Direction="270" Opacity="0.12" />
+                </Setter.Value>
+              </Setter>
+              <Setter Property="FontWeight" Value="SemiBold" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- A full-width row that highlights on hover, like a menu item. -->
+  <Style x:Key="MenuRow" TargetType="Button">
+    <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+    <Setter Property="FontFamily" Value="{DynamicResource UIFont}" />
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="Height" Value="28" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Border x:Name="Root" Background="Transparent" CornerRadius="6" Padding="8,0">
+            <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Stretch" />
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="Root" Property="Background" Value="{DynamicResource MenuHoverBrush}" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <Style x:Key="SectionLabel" TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{DynamicResource UIFont}" />
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}" />
+    <Setter Property="Margin" Value="4,0,4,10" />
+  </Style>
+
+  <Style x:Key="SeparatorLine" TargetType="Rectangle">
+    <Setter Property="Height" Value="1" />
+    <Setter Property="Fill" Value="{DynamicResource SeparatorBrush}" />
+    <Setter Property="Margin" Value="4,2,4,12" />
+  </Style>
+
+</ResourceDictionary>

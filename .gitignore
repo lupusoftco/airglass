@@ -17,3 +17,9 @@ xcuserdata/
 
 # macOS
 .DS_Store
+
+# .NET (Windows app)
+bin/
+obj/
+*.user
+.vs/
