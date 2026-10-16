@@ -4,7 +4,9 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
+using System.Windows.Media;
 using System.Windows.Threading;
+using AirGlass.Capture;
 using AirGlass.Support;
 using Forms = System.Windows.Forms;
 
@@ -48,6 +50,12 @@ public partial class PopoverWindow : Window
             if (IsVisible) PlaceNearTray();
         };
         PreviewKeyDown += OnKeyDown;
+        // The picker needs an owner window; the popover itself is never captured
+        // (like the macOS app, which excludes itself from the picker).
+        var handle = new WindowInteropHelper(this).EnsureHandle();
+        _state.PickerOwner = handle;
+        SetWindowDisplayAffinity(handle, WDA_EXCLUDEFROMCAPTURE);
+
         Render();
     }
 
@@ -119,11 +127,39 @@ public partial class PopoverWindow : Window
         DeviceText.Text = _state.ViewerDevice ?? "";
         DeviceAddressText.Text = $"Bağlı · {_state.ViewerAddress}";
 
+        var capturing = (_state.CaptureState as CaptureState.Capturing)?.Source;
+        WaitingCapturePanel.Visibility = capturing != null ? Visibility.Visible : Visibility.Collapsed;
+        ConnectedSourcePanel.Visibility = capturing != null ? Visibility.Visible : Visibility.Collapsed;
+        ConnectedPicker.Visibility = capturing == null ? Visibility.Visible : Visibility.Collapsed;
+        if (capturing != null)
+        {
+            ShowSource(capturing, WaitingSourceIcon, WaitingSourceName, WaitingSourceKind);
+            ShowSource(capturing, ConnectedSourceIcon, ConnectedSourceName, ConnectedSourceKind);
+        }
+        var failure = (_state.CaptureState as CaptureState.Failed)?.Message;
+        CaptureFailedText.Text = failure ?? "";
+        CaptureFailedText.Visibility = failure != null ? Visibility.Visible : Visibility.Collapsed;
+
         var fullScreen = _state.CaptureMode == CaptureMode.FullScreen;
         FullScreenSegment.IsChecked = fullScreen;
         WindowSegment.IsChecked = !fullScreen;
         ConnectedFullScreenSegment.IsChecked = fullScreen;
         ConnectedWindowSegment.IsChecked = !fullScreen;
+    }
+
+    // A display, and a window with a title bar, in the style of the SF Symbols on macOS.
+    private static readonly Geometry DisplayIcon = Geometry.Parse(
+        "M2,1.5 H13 A1.2,1.2 0 0 1 14.2,2.7 V9.3 A1.2,1.2 0 0 1 13,10.5 H2 A1.2,1.2 0 0 1 0.8,9.3 V2.7 A1.2,1.2 0 0 1 2,1.5 Z M5,13.5 H10 M7.5,10.5 V13.5");
+    private static readonly Geometry WindowIcon = Geometry.Parse(
+        "M2,1.8 H13 A1.2,1.2 0 0 1 14.2,3 V12 A1.2,1.2 0 0 1 13,13.2 H2 A1.2,1.2 0 0 1 0.8,12 V3 A1.2,1.2 0 0 1 2,1.8 Z M0.8,5 H14.2");
+
+    private static void ShowSource(CaptureSource source, System.Windows.Shapes.Path icon,
+        System.Windows.Controls.TextBlock name, System.Windows.Controls.TextBlock kind)
+    {
+        icon.Data = source.IsWindow ? WindowIcon : DisplayIcon;
+        name.Text = source.Name;
+        name.ToolTip = source.Name;
+        kind.Text = source.IsWindow ? "Pencere" : "Tüm ekran";
     }
 
     private void OnStateChanged(object? sender, PropertyChangedEventArgs e)
@@ -165,6 +201,10 @@ public partial class PopoverWindow : Window
     private void OnWindowSegment(object sender, RoutedEventArgs e) => _state.ChooseSource(CaptureMode.Window);
 
     private void OnDisconnect(object sender, RoutedEventArgs e) => _state.Disconnect();
+
+    private void OnChangeSource(object sender, RoutedEventArgs e) => _state.ChooseSource(_state.CaptureMode);
+
+    private void OnStopCapture(object sender, RoutedEventArgs e) => _state.StopCapture();
 
     private void OnAbout(object sender, RoutedEventArgs e)
     {
@@ -257,6 +297,11 @@ public partial class PopoverWindow : Window
         public int X;
         public int Y;
     }
+
+    private const uint WDA_EXCLUDEFROMCAPTURE = 0x11;
+
+    [DllImport("user32.dll")]
+    private static extern bool SetWindowDisplayAffinity(IntPtr hWnd, uint affinity);
 
     [DllImport("user32.dll")]
     private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int x, int y, int cx, int cy, uint flags);

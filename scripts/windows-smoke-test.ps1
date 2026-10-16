@@ -10,6 +10,23 @@ param(
 )
 $ErrorActionPreference = "Stop"
 
+# The streaming stack without a phone: encoder, GPU path, WebRTC loopback.
+$selfTest = Start-Process -FilePath (Resolve-Path $Exe) -ArgumentList "--self-test" -PassThru
+$null = $selfTest.Handle # keeps the exit code readable after the process ends
+if (-not $selfTest.WaitForExit(120000)) {
+    Stop-Process -Id $selfTest.Id -Force
+    Write-Error "smoke test FAILED: --self-test did not finish within 120 s"
+    exit 1
+}
+$report = Join-Path $env:LOCALAPPDATA "AirGlass\self-test.txt"
+if (Test-Path $report) { Get-Content $report | Write-Host }
+if ($selfTest.ExitCode -ne 0) {
+    $log = Join-Path $env:LOCALAPPDATA "AirGlass\AirGlass.log"
+    if (Test-Path $log) { Get-Content $log | Write-Host }
+    Write-Error "smoke test FAILED: --self-test exited with $($selfTest.ExitCode)"
+    exit 1
+}
+
 $process = Start-Process -FilePath (Resolve-Path $Exe) -PassThru
 Start-Sleep -Seconds $Seconds
 

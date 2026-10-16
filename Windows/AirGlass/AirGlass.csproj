@@ -2,7 +2,9 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <!-- Built against the Windows 11 SDK for the borderless capture API; runs on
+         Windows 10 2004 and later. -->
+    <TargetFramework>net8.0-windows10.0.22621.0</TargetFramework>
     <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
     <UseWPF>true</UseWPF>
     <!-- Only for the notification area (tray) icon. -->
@@ -11,6 +13,8 @@
     <!-- WPF and Windows Forms share type names; usings are explicit. -->
     <ImplicitUsings>disable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
+    <!-- Direct3D / WinRT interop calls COM methods through vtables. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
     <AssemblyName>AirGlass</AssemblyName>
     <RootNamespace>AirGlass</RootNamespace>
@@ -36,6 +40,9 @@
 
   <ItemGroup>
     <PackageReference Include="QRCoder" Version="1.8.1" />
+    <PackageReference Include="SIPSorcery" Version="10.0.17" />
+    <PackageReference Include="Vortice.Direct3D11" Version="3.8.3" />
+    <PackageReference Include="Vortice.MediaFoundation" Version="3.8.3" />
   </ItemGroup>
 
 </Project>

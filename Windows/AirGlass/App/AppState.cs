@@ -1,7 +1,11 @@
+using System;
 using System.ComponentModel;
+using System.Net;
 using System.Runtime.CompilerServices;
 using System.Windows;
+using AirGlass.Capture;
 using AirGlass.Server;
+using AirGlass.Streaming;
 using AirGlass.Support;
 
 namespace AirGlass;
@@ -31,7 +35,10 @@ public sealed class AppState : INotifyPropertyChanged
     private readonly TokenStore _tokens = new();
     private readonly LocalServer _server;
     private readonly LocalAddressMonitor _addressMonitor = new();
+    private readonly VideoPipeline? _pipeline;
+    private readonly ScreenCapturer? _capturer;
     private ViewerChannel? _viewer;
+    private PeerSession? _session;
 
     private CaptureMode _captureMode = CaptureMode.FullScreen;
     private ServerState _serverState = new ServerState.Starting();
@@ -39,9 +46,22 @@ public sealed class AppState : INotifyPropertyChanged
     private string _token;
     private string? _viewerDevice;
     private string? _viewerAddress;
+    private CaptureState _captureState = new CaptureState.Idle();
 
     public AppState()
     {
+        try
+        {
+            _pipeline = new VideoPipeline();
+            _capturer = new ScreenCapturer(_pipeline.Device, _pipeline);
+            _capturer.StateChanged += state => CaptureState = state;
+        }
+        catch (Exception error)
+        {
+            // No usable GPU device; the popover says so when a source is chosen.
+            Log.Capture($"Video pipeline unavailable: {error}");
+        }
+
         _token = _tokens.Current;
         _server = new LocalServer(_tokens);
         _server.StateChanged += state => ServerState = state;
@@ -70,6 +90,21 @@ public sealed class AppState : INotifyPropertyChanged
     {
         get => _localAddress;
         private set => SetField(ref _localAddress, value);
+    }
+
+    public CaptureState CaptureState
+    {
+        get => _captureState;
+        private set => SetField(ref _captureState, value);
+    }
+
+    /// <summary>The window that owns the system capture picker.</summary>
+    public IntPtr PickerOwner
+    {
+        set
+        {
+            if (_capturer != null) _capturer.OwnerWindow = value;
+        }
     }
 
     /// <summary>Mirrors the token store so the QR code refreshes when it rotates.</summary>
@@ -130,16 +165,32 @@ public sealed class AppState : INotifyPropertyChanged
     /// other viewer can join until this one is gone.</summary>
     private void OnViewerConnected(ViewerChannel channel)
     {
-        if (_viewer != null)
+        if (_viewer != null || _pipeline == null || !IPAddress.TryParse(_localAddress ?? "", out var localAddress))
         {
             channel.Close();
             IssueNewToken();
             return;
         }
-        _viewer = channel;
-        channel.Closed += () =>
+
+        PeerSession session;
+        try
         {
-            if (_viewer != channel) return;
+            session = new PeerSession(channel, _pipeline, localAddress);
+        }
+        catch (Exception error)
+        {
+            Log.WebRtc($"Could not create the peer connection: {error}");
+            channel.Close();
+            IssueNewToken();
+            return;
+        }
+
+        _viewer = channel;
+        _session = session;
+        session.Ended += () =>
+        {
+            if (_session != session) return;
+            _session = null;
             _viewer = null;
             ViewerAddress = null;
             ViewerDevice = null;
@@ -148,6 +199,7 @@ public sealed class AppState : INotifyPropertyChanged
         Log.App($"Viewer connected: {channel.DeviceName} ({channel.RemoteAddress})");
         ViewerAddress = channel.RemoteAddress;
         ViewerDevice = channel.DeviceName;
+        session.Start();
     }
 
     /// <summary>Every disconnect gets a fresh token, and with it a fresh QR code.</summary>
@@ -156,16 +208,27 @@ public sealed class AppState : INotifyPropertyChanged
         Token = _tokens.Rotate();
     }
 
-    public void ChooseSource(CaptureMode mode)
+    /// <summary>Starts capturing the screen, or opens the system picker.</summary>
+    public async void ChooseSource(CaptureMode mode)
     {
-        // The system capture picker arrives with screen capture (W3).
         CaptureMode = mode;
+        if (_capturer == null)
+        {
+            CaptureState = new CaptureState.Failed("Ekran yakalama bu bilgisayarda kullanılamıyor");
+            return;
+        }
+        await _capturer.ChooseAsync(mode);
+    }
+
+    public void StopCapture()
+    {
+        _capturer?.Stop();
     }
 
     /// <summary>Ends the viewer's session; a new QR code follows.</summary>
     public void Disconnect()
     {
-        _viewer?.Close();
+        _session?.End();
     }
 
     public void CopyViewerUrl()

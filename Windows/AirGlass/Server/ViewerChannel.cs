@@ -59,7 +59,7 @@ public sealed class ViewerChannel
     public void Send(JsonObject message)
     {
         var json = message.ToJsonString();
-        Log.Signaling($"→ {(message["type"] as JsonValue)?.ToString() ?? "?"}");
+        Log.Signaling($"→ {Json.String(message["type"]) ?? "?"}");
         lock (_gate)
         {
             if (_isClosed) return;
@@ -80,7 +80,7 @@ public sealed class ViewerChannel
             if (_isClosed) return;
             _lastSeen = DateTime.UtcNow;
         }
-        Log.Signaling($"← {(message["type"] as JsonValue)?.ToString() ?? "?"}");
+        Log.Signaling($"← {Json.String(message["type"]) ?? "?"}");
         Post(() => MessageReceived?.Invoke(message));
     }
 

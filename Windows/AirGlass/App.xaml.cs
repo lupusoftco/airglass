@@ -21,6 +21,14 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        // Before any WebRTC type is touched.
+        WebRtcLogging.Install();
+
+        if (Array.IndexOf(e.Args, "--self-test") >= 0)
+        {
+            RunSelfTest();
+            return;
+        }
 
         _singleInstance = new Mutex(initiallyOwned: true, @"Local\AirGlass", out var isFirstInstance);
         if (!isFirstInstance)
@@ -43,6 +51,20 @@ public partial class App : Application
         _trayIcon.AboutRequested += AboutWindow.ShowSingle;
         _trayIcon.QuitRequested += Quit;
         _popover.QuitRequested += Quit;
+    }
+
+    private async void RunSelfTest()
+    {
+        var code = 1;
+        try
+        {
+            code = await SelfTest.RunAsync();
+        }
+        catch (Exception error)
+        {
+            Log.App($"self-test crashed: {error}");
+        }
+        Shutdown(code);
     }
 
     private void Quit()

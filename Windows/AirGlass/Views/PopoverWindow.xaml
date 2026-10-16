@@ -79,6 +79,36 @@
                             Style="{StaticResource SegmentButton}" Click="OnWindowSegment" />
             </UniformGrid>
           </Border>
+          <!-- What is being captured, with Değiştir… / Durdur -->
+          <StackPanel x:Name="WaitingCapturePanel" Visibility="Collapsed">
+            <Grid Margin="4,0,4,10">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="28" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Border Width="28" Height="28" CornerRadius="7" Background="{DynamicResource ControlBrush}">
+              <Path x:Name="WaitingSourceIcon" Width="15" Height="15" Stretch="None" StrokeThickness="1.2"
+                    Stroke="{DynamicResource TextBrush}" StrokeLineJoin="Round" StrokeStartLineCap="Round"
+                    StrokeEndLineCap="Round" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+            <StackPanel Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center">
+              <TextBlock x:Name="WaitingSourceName" FontSize="13" FontWeight="Medium"
+                         Foreground="{DynamicResource TextBrush}" TextTrimming="CharacterEllipsis" />
+              <TextBlock x:Name="WaitingSourceKind" FontSize="11" Foreground="{DynamicResource SecondaryTextBrush}" />
+            </StackPanel>
+          </Grid>
+            <UniformGrid Columns="2" Margin="4,0,4,10">
+              <Button Style="{StaticResource ControlButton}" Height="24" Margin="0,0,3,0" Click="OnChangeSource">
+                <TextBlock Text="Değiştir…" />
+              </Button>
+              <Button Style="{StaticResource ControlButton}" Height="24" Margin="3,0,0,0"
+                      Foreground="{DynamicResource RedBrush}" Click="OnStopCapture">
+                <TextBlock Text="Durdur" />
+              </Button>
+            </UniformGrid>
+          </StackPanel>
+          <TextBlock x:Name="CaptureFailedText" Visibility="Collapsed" Margin="4,0,4,10" FontSize="11"
+                     TextWrapping="Wrap" Foreground="{DynamicResource SecondaryTextBrush}" />
         </StackPanel>
 
         <!-- 2 · Connected: device card, what is shown, disconnect -->
@@ -105,8 +135,26 @@
           </Border>
 
           <TextBlock Text="Yayınlanan" Style="{StaticResource SectionLabel}" />
+          <StackPanel x:Name="ConnectedSourcePanel" Visibility="Collapsed">
+            <Grid Margin="4,0,4,10">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="28" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Border Width="28" Height="28" CornerRadius="7" Background="{DynamicResource ControlBrush}">
+              <Path x:Name="ConnectedSourceIcon" Width="15" Height="15" Stretch="None" StrokeThickness="1.2"
+                    Stroke="{DynamicResource TextBrush}" StrokeLineJoin="Round" StrokeStartLineCap="Round"
+                    StrokeEndLineCap="Round" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+            <StackPanel Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center">
+              <TextBlock x:Name="ConnectedSourceName" FontSize="13" FontWeight="Medium"
+                         Foreground="{DynamicResource TextBrush}" TextTrimming="CharacterEllipsis" />
+              <TextBlock x:Name="ConnectedSourceKind" FontSize="11" Foreground="{DynamicResource SecondaryTextBrush}" />
+            </StackPanel>
+          </Grid>
+          </StackPanel>
           <!-- "Tüm ekran / Pencere seç" -->
-          <Border Margin="4,0,4,10" Padding="2" CornerRadius="8" Background="{DynamicResource SegmentTrackBrush}">
+          <Border x:Name="ConnectedPicker" Margin="4,0,4,10" Padding="2" CornerRadius="8" Background="{DynamicResource SegmentTrackBrush}">
             <UniformGrid Columns="2">
               <ToggleButton x:Name="ConnectedFullScreenSegment" Content="Tüm ekran" Margin="0,0,1,0"
                             Style="{StaticResource SegmentButton}" Click="OnFullScreenSegment" />
