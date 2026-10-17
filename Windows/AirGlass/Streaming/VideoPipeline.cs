@@ -45,7 +45,8 @@ public sealed class VideoPipeline : IFrameConsumer, IDisposable
     private bool _hasNewFrame;
     private IConverter? _converter;
     private H264Encoder? _encoder;
-    private TimeSpan _lastEncoded = TimeSpan.MinValue;
+    /// <summary>When the last frame was encoded; null before the first one.</summary>
+    private TimeSpan? _lastEncoded;
     private volatile bool _isActive;
     private volatile bool _keyFrameRequested;
     private volatile bool _isDisposed;
@@ -177,7 +178,7 @@ public sealed class VideoPipeline : IFrameConsumer, IDisposable
     private void EncodeLatest()
     {
         // At most 60 fps: a faster screen (e.g. 144 Hz) gets its newest frame sent.
-        var sinceLast = _clock.Elapsed - _lastEncoded;
+        var sinceLast = SinceLastEncoded();
         if (sinceLast < FrameInterval) Thread.Sleep(FrameInterval - sinceLast);
 
         byte[] nv12;
@@ -185,7 +186,7 @@ public sealed class VideoPipeline : IFrameConsumer, IDisposable
         lock (_gpu)
         {
             if (_latest == null) return;
-            if (!_hasNewFrame && !_keyFrameRequested && _clock.Elapsed - _lastEncoded < RepeatInterval) return;
+            if (!_hasNewFrame && !_keyFrameRequested && SinceLastEncoded() < RepeatInterval) return;
             _hasNewFrame = false;
 
             (width, height) = OutputSize(_latestWidth, _latestHeight);
@@ -211,13 +212,16 @@ public sealed class VideoPipeline : IFrameConsumer, IDisposable
         }
 
         var now = _clock.Elapsed;
-        var gap = _lastEncoded == TimeSpan.MinValue ? FrameInterval : now - _lastEncoded;
+        var gap = _lastEncoded is { } last ? now - last : FrameInterval;
         _lastEncoded = now;
         foreach (var unit in _encoder.Encode(nv12, now.Ticks, FrameInterval.Ticks))
         {
             FrameEncoded?.Invoke(unit, gap);
         }
     }
+
+    private TimeSpan SinceLastEncoded() =>
+        _lastEncoded is { } last ? _clock.Elapsed - last : TimeSpan.MaxValue;
 
     /// <summary>Fits the long edge into <see cref="MaxPixelEdge"/>; even sizes for 4:2:0.</summary>
     private static (int Width, int Height) OutputSize(int width, int height)
