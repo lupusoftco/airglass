@@ -32,7 +32,7 @@ AirGlass, bilgisayarının ekranını ya da tek bir pencereyi aynı Wi-Fi'deki b
 - **Tek kullanımlık QR.** QR kodun içindeki anahtar ilk bağlantıda geçersiz olur. Bağlantı kopunca ya da "Bağlantıyı kes"e basınca yeni bir QR üretilir.
 - **Tek izleyici.** Biri izlerken başka bir cihaz bağlanamaz.
 - **Sadece görüntü.** Telefonunuzdan bilgisayarınıza dokunma, fare ya da klavye girdisi gitmez.
-- **Tüm ekran veya tek pencere.** Seçim işletim sisteminizin kendi içerik seçicisiyle yapılır.
+- **Tüm ekran veya tek pencere.** Pencere (macOS'ta ekran da) işletim sisteminizin kendi içerik seçicisiyle seçilir.
 - **Her an görünür.** Biri izlerken menü çubuğu veya sistem tepsisindeki ikon değişir.
 
 ### Kurulum
@@ -130,7 +130,7 @@ Xcode'da çalışmak istersen `make project` ile `AirGlass.xcodeproj` dosyasın�
 
 #### Windows
 
-Gerekenler: Windows 10 (2004) veya üstü, [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
+Gerekenler: Windows 10 (2004) veya üstü, [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0); exe üretmek için ayrıca [PowerShell 7](https://learn.microsoft.com/powershell/scripting/install/installing-powershell-on-windows) (`pwsh`).
 
 ```powershell
 git clone https://github.com/lupusoftco/airglass.git
@@ -139,7 +139,7 @@ dotnet run --project Windows/AirGlass        # derler ve AirGlass'ı başlatır
 pwsh scripts/windows-publish.ps1             # dist/AirGlass-<sürüm>.exe üretir ve test eder
 ```
 
-Windows uygulaması `Windows/AirGlass` klasöründedir (WPF, C#). Telefondaki izleme sayfası iki uygulamada ortaktır: `Viewer/` klasöründeki dosyalar exe'nin içine gömülür.
+`windows-publish.ps1` exe'yi üretip kısa bir süre çalıştırarak test eder; bu sırada açık bir AirGlass varsa önce kapat. Windows uygulaması `Windows/AirGlass` klasöründedir (WPF, C#). Telefondaki izleme sayfası iki uygulamada ortaktır: `Viewer/` klasöründeki dosyalar exe'nin içine gömülür.
 
 ### Bilinen sınırlamalar
 
@@ -174,7 +174,7 @@ AirGlass is a small, open-source app that mirrors your computer's screen, or a s
 - **One-time QR code.** The key inside the QR code stops working after the first connection. A new QR code appears when the viewer disconnects or you press disconnect.
 - **One viewer at a time.** While someone is watching, no other device can connect.
 - **View only.** No touch, mouse or keyboard input goes from your phone to your computer.
-- **Whole screen or a single window,** chosen with your operating system's own content picker.
+- **Whole screen or a single window.** The window (on macOS, the screen too) is chosen with your operating system's own content picker.
 - **Always visible.** The icon changes while someone is watching.
 
 ### Installation
@@ -272,7 +272,7 @@ To work in Xcode, run `make project` and open the generated `AirGlass.xcodeproj`
 
 #### Windows
 
-Requirements: Windows 10 (2004) or later, [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
+Requirements: Windows 10 (2004) or later, [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0); to build the exe, also [PowerShell 7](https://learn.microsoft.com/powershell/scripting/install/installing-powershell-on-windows) (`pwsh`).
 
 ```powershell
 git clone https://github.com/lupusoftco/airglass.git
@@ -281,7 +281,7 @@ dotnet run --project Windows/AirGlass        # builds and launches AirGlass
 pwsh scripts/windows-publish.ps1             # creates and tests dist/AirGlass-<version>.exe
 ```
 
-The Windows app lives in `Windows/AirGlass` (WPF, C#). The viewer page on the phone is shared by both apps: the files in `Viewer/` are embedded in the exe.
+`windows-publish.ps1` builds the exe and tests it by running it briefly, so quit any running AirGlass first. The Windows app lives in `Windows/AirGlass` (WPF, C#). The viewer page on the phone is shared by both apps: the files in `Viewer/` are embedded in the exe.
 
 ### Known limitations
 
