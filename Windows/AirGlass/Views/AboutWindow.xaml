@@ -1,0 +1,39 @@
+<Window x:Class="AirGlass.Views.AboutWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="AirGlass Hakkında"
+        Width="300" SizeToContent="Height" ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen" ShowInTaskbar="True"
+        Background="{DynamicResource PanelBrush}"
+        UseLayoutRounding="True" TextOptions.TextFormattingMode="Display"
+        FontFamily="{DynamicResource UIFont}">
+
+  <!-- Same content as the macOS About panel: icon, name, version, credits
+       and copyright, centered. -->
+  <StackPanel Margin="24,24,24,22" HorizontalAlignment="Center">
+    <Image x:Name="AppIcon" Width="64" Height="64" HorizontalAlignment="Center"
+           RenderOptions.BitmapScalingMode="HighQuality" />
+    <TextBlock Text="AirGlass" Margin="0,12,0,0" HorizontalAlignment="Center"
+               FontSize="15" FontWeight="Bold" Foreground="{DynamicResource TextBrush}" />
+    <TextBlock x:Name="VersionText" Margin="0,4,0,0" HorizontalAlignment="Center"
+               FontSize="11" Foreground="{DynamicResource SecondaryTextBrush}" />
+
+    <StackPanel Margin="0,14,0,0" HorizontalAlignment="Center" TextBlock.FontSize="11">
+      <TextBlock HorizontalAlignment="Center">
+        <Hyperlink NavigateUri="https://lupusoft.com" RequestNavigate="OnNavigate"
+                   Foreground="{DynamicResource AccentBrush}">Developed by Lupusoft</Hyperlink>
+      </TextBlock>
+      <TextBlock HorizontalAlignment="Center" Margin="0,2,0,0">
+        <Hyperlink NavigateUri="https://github.com/lupusoftco/airglass" RequestNavigate="OnNavigate"
+                   Foreground="{DynamicResource AccentBrush}">GitHub</Hyperlink>
+      </TextBlock>
+      <TextBlock HorizontalAlignment="Center" Margin="0,2,0,0">
+        <Hyperlink NavigateUri="https://github.com/lupusoftco/airglass/blob/main/LICENSE" RequestNavigate="OnNavigate"
+                   Foreground="{DynamicResource AccentBrush}">MIT License</Hyperlink>
+      </TextBlock>
+    </StackPanel>
+
+    <TextBlock Text="© 2026 Lupusoft" Margin="0,14,0,0" HorizontalAlignment="Center"
+               FontSize="11" Foreground="{DynamicResource SecondaryTextBrush}" />
+  </StackPanel>
+</Window>

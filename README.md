@@ -22,9 +22,7 @@
 
 AirGlass, bilgisayarının ekranını ya da tek bir pencereyi aynı Wi-Fi'deki bir iPhone'un tarayıcısına canlı yansıtan, açık kaynak ve minimal bir uygulamadır. Telefona hiçbir şey kurmazsın: QR kodu okutursun, görüntü Safari'de açılır.
 
-**🖥️ Desteklenen Platformlar:**
-- **macOS** (menü çubuğu uygulaması, Swift + SwiftUI)
-- **Windows** (bağımsız uygulama, .NET 8 + C#) — **YENİ! v0.1.0**
+**Platformlar:** macOS 14 ve üstü (menü çubuğu uygulaması) ve Windows 10 (2004) / Windows 11 (sistem tepsisi uygulaması). İkisi aynı tasarımı, aynı izleme sayfasını ve aynı güvenlik kurallarını kullanır.
 
 ### Özellikler
 
@@ -38,6 +36,8 @@ AirGlass, bilgisayarının ekranını ya da tek bir pencereyi aynı Wi-Fi'deki b
 - **Her an görünür.** Biri izlerken menü çubuğu veya sistem tepsisindeki ikon değişir.
 
 ### Kurulum
+
+#### macOS
 
 1. [Releases](https://github.com/lupusoftco/airglass/releases/latest) sayfasından `AirGlass-<sürüm>.dmg` dosyasını indir.
 2. `.dmg`'yi aç ve **AirGlass**'ı **Applications** klasörüne sürükle.
@@ -57,6 +57,13 @@ AirGlass, bilgisayarının ekranını ya da tek bir pencereyi aynı Wi-Fi'deki b
 4. Menü çubuğunda AirGlass ikonu belirir; Dock'ta ikon yoktur.
 5. İlk kez bir kaynak seçtiğinde macOS **Ekran Kaydı** izni ister. **Sistem Ayarları → Gizlilik ve Güvenlik → Ekran ve Sistem Sesi Kaydı** bölümünden AirGlass'a izin ver, sonra AirGlass'ı kapatıp yeniden aç.
 6. macOS **yerel ağ** erişimi ve güvenlik duvarı açıksa **gelen bağlantılar** için izin isteyebilir. İkisine de izin ver; telefon Mac'e bunlar sayesinde ulaşır.
+
+#### Windows
+
+1. [Releases](https://github.com/lupusoftco/airglass/releases/latest) sayfasından `AirGlass-<sürüm>.exe` dosyasını indir. Kurulum yok; tek dosyadır, .NET gerektirmez.
+2. Çalıştır. Uygulama imzalı olmadığı için Windows SmartScreen "Windows bilgisayarınızı korudu" diyebilir: **Ek bilgi**'ye, sonra **Yine de çalıştır**'a bas. Bunu yalnızca bir kez yaparsın.
+3. AirGlass ikonu görev çubuğunun sağındaki sistem tepsisinde belirir (görünmüyorsa **^** okunun altındadır). İkona tıklayınca popover açılır; sağ tıkta **AirGlass Hakkında** ve **Çıkış** vardır.
+4. İlk açılışta **Windows Defender Güvenlik Duvarı** AirGlass için izin ister. **Özel ağlar** işaretliyken **Erişime izin ver**'e bas; telefon bilgisayara bu sayede ulaşır. Wi-Fi ağın Windows'ta **Ortak** olarak ayarlıysa ya ağı **Özel** yap (**Ayarlar → Ağ ve İnternet → Wi-Fi → ağın özellikleri**) ya da izin penceresinde **Ortak ağlar**'ı da işaretle.
 
 ### Nasıl çalışır
 
@@ -90,15 +97,17 @@ AirGlass, bilgisayarının ekranını ya da tek bir pencereyi aynı Wi-Fi'deki b
   </picture>
 </p>
 
-**5. Yeni QR.** Telefon "Bağlantı kesildi" der. QR kod tek kullanımlık olduğu için Mac'te hemen yeni bir QR kod belirir.
+**5. Yeni QR.** Telefon "Bağlantı kesildi" der. QR kod tek kullanımlık olduğu için bilgisayarda hemen yeni bir QR kod belirir.
 
 <p align="center">
   <img src="docs/screenshots/phone-disconnected.png" alt="Telefonda Bağlantı kesildi ekranı" width="180">
 </p>
 
-<sub>Görseller AirGlass'ın arayüz tasarımından üretilmiştir.</sub>
+<sub>Görseller AirGlass'ın arayüz tasarımından üretilmiştir. Windows'ta popover sistem tepsisindeki ikonun üstünde açılır; içeriği aynıdır.</sub>
 
 ### Kaynaktan derleme
+
+#### macOS
 
 Gerekenler: macOS 14 (Sonoma) veya üstü, Xcode 16 veya üstü, [Homebrew](https://brew.sh).
 
@@ -119,63 +128,29 @@ make clean  # derleme çıktılarını siler
 
 Xcode'da çalışmak istersen `make project` ile `AirGlass.xcodeproj` dosyasını üretip açabilirsin.
 
----
+#### Windows
 
-## Windows Kurulumu
+Gerekenler: Windows 10 (2004) veya üstü, [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
 
-**Windows 10+ (Build 19041) ve Windows 11 desteklenir.**
-
-### Yüksek Hız Kurulumu
-
-1. [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) kur
-2. Repository klonla:
-   ```bash
-   git clone https://github.com/lupusoftco/airglass.git
-   cd airglass
-   git checkout windows-port
-   cd Windows
-   ```
-3. Build et:
-   ```bash
-   dotnet restore
-   dotnet build -c Release
-   ```
-4. Çalıştır:
-   ```bash
-   dotnet run --project AirGlass.Windows
-   ```
-
-### Standalone EXE (Taşınabilir)
-
-```bash
-# Dosya oluştur:
-dotnet publish -c Release --runtime win-x64 --self-contained -o build/output
-
-# Çalıştır:
-./build/output/AirGlass.exe
+```powershell
+git clone https://github.com/lupusoftco/airglass.git
+cd airglass
+dotnet run --project Windows/AirGlass        # derler ve AirGlass'ı başlatır
+pwsh scripts/windows-publish.ps1             # dist/AirGlass-<sürüm>.exe üretir ve test eder
 ```
 
-### Nasıl Kullanılır
-
-1. AirGlass'ı başlat → **start** yaz
-2. QR kod görünür
-3. iPhone'un kamerasıyla tara → Safari'de açılır
-4. Ekran görünür
-5. **stop** yazarak durdur
-
-**Full rehber**: [Windows/README.md](Windows/README.md)
-
----
+Windows uygulaması `Windows/AirGlass` klasöründedir (WPF, C#). Telefondaki izleme sayfası iki uygulamada ortaktır: `Viewer/` klasöründeki dosyalar exe'nin içine gömülür.
 
 ### Bilinen sınırlamalar
 
-- **Mac ve telefon aynı Wi-Fi'de olmalı.** Bağlantı yalnızca yerel ağda kurulur.
-- **Misafir ya da istemci izolasyonlu ağlarda çalışmaz.** Otel, kafe, kurumsal misafir ağları gibi cihazların birbirini görmesine izin vermeyen ağlarda telefon Mac'e ulaşamaz.
+- **Bilgisayar ve telefon aynı Wi-Fi'de olmalı.** Bağlantı yalnızca yerel ağda kurulur.
+- **Misafir ya da istemci izolasyonlu ağlarda çalışmaz.** Otel, kafe, kurumsal misafir ağları gibi cihazların birbirini görmesine izin vermeyen ağlarda telefon bilgisayara ulaşamaz.
 - **Ekranı açık tutma yöntemi çalan müziği durdurabilir.** Safari, http üzerinden açılan sayfalarda ekranı açık tutma API'sini (Wake Lock) sunmaz. AirGlass bunun yerine ilk dokunuşta görünmez, sessiz bir video oynatır. Bu da telefonda çalan müziği ya da podcast'i durdurabilir. Tam ekrandayken buna gerek kalmaz.
 - **Ses aktarılmaz;** yalnızca görüntü.
 - **Aynı anda tek izleyici.**
 - **Sayfa ve sinyalleşme yerel ağda şifresiz HTTP üzerinden gider;** görüntünün kendisi şifrelidir. Tek kullanımlık anahtar URL'nin `#` kısmında taşınır, sunucu loglarına ve HTTP isteklerine girmez.
-- **Uygulama notarize edilmemiştir;** ilk açılışta "Yine de Aç" adımı gerekir.
+- **Uygulama notarize edilmemiş (macOS) ve imzalanmamıştır (Windows);** ilk açılışta macOS'ta "Yine de Aç", Windows'ta SmartScreen'de "Yine de çalıştır" adımı gerekir.
+- **Windows'ta Pencere seç** ve birden fazla monitörde **Tüm ekran**, Windows'un kendi yakalama seçicisini açar; Windows 10'da yakalanan alanın çevresinde sarı bir çerçeve görünür.
 
 ### Lisans
 
@@ -189,9 +164,7 @@ dotnet publish -c Release --runtime win-x64 --self-contained -o build/output
 
 AirGlass is a small, open-source app that mirrors your computer's screen, or a single window, live to the browser of a phone on the same Wi-Fi. Nothing gets installed on the phone: scan the QR code and the picture opens in Safari.
 
-**🖥️ Supported Platforms:**
-- **macOS** (menu bar application, Swift + SwiftUI)
-- **Windows** (standalone application, .NET 8 + C#) — **NEW! v0.1.0**
+**Platforms:** macOS 14 or later (menu bar app) and Windows 10 (2004) / Windows 11 (notification area app). Both share the same design, the same viewer page and the same security rules.
 
 ### Features
 
@@ -205,6 +178,8 @@ AirGlass is a small, open-source app that mirrors your computer's screen, or a s
 - **Always visible.** The icon changes while someone is watching.
 
 ### Installation
+
+#### macOS
 
 1. Download `AirGlass-<version>.dmg` from the [Releases](https://github.com/lupusoftco/airglass/releases/latest) page.
 2. Open the `.dmg` and drag **AirGlass** into **Applications**.
@@ -225,9 +200,16 @@ AirGlass is a small, open-source app that mirrors your computer's screen, or a s
 5. The first time you pick a source, macOS asks for **Screen Recording** permission. Allow AirGlass under **System Settings → Privacy & Security → Screen & System Audio Recording**, then quit and reopen AirGlass.
 6. macOS may also ask for **local network** access and, if the firewall is on, for **incoming connections**. Allow both; they are how the phone reaches the Mac.
 
+#### Windows
+
+1. Download `AirGlass-<version>.exe` from the [Releases](https://github.com/lupusoftco/airglass/releases/latest) page. There is no installer; it is a single file and needs no .NET installation.
+2. Run it. The app is not signed, so Windows SmartScreen may say "Windows protected your PC": click **More info**, then **Run anyway**. You only need to do this once.
+3. The AirGlass icon appears in the notification area at the right of the taskbar (if you don't see it, it is under the **^** arrow). Click it to open the popover; right-click for **AirGlass Hakkında** (About) and **Çıkış** (Quit).
+4. On first launch **Windows Defender Firewall** asks about AirGlass. Keep **Private networks** checked and click **Allow access**; this is how the phone reaches the PC. If your Wi-Fi is set to **Public** in Windows, either make it **Private** (**Settings → Network & internet → Wi-Fi → your network's properties**) or also check **Public networks** in that dialog.
+
 ### How it works
 
-**1. Pick a source and scan the QR code.** Click the AirGlass icon in the menu bar. Choose **Tüm ekran** (whole screen) or **Pencere seç** (pick a window), then scan the QR code with your phone's camera and tap the link.
+**1. Pick a source and scan the QR code.** Click the AirGlass icon in the menu bar (on Windows, in the notification area). Choose **Tüm ekran** (whole screen) or **Pencere seç** (pick a window), then scan the QR code with your phone's camera and tap the link.
 
 <p align="center">
   <picture>
@@ -236,7 +218,7 @@ AirGlass is a small, open-source app that mirrors your computer's screen, or a s
   </picture>
 </p>
 
-**2. The phone connects.** Safari opens and connects to the Mac; nothing is installed on the phone.
+**2. The phone connects.** Safari opens and connects to your computer; nothing is installed on the phone.
 
 <p align="center">
   <img src="docs/screenshots/phone-connecting.png" alt="Connecting screen on the phone" width="180">
@@ -257,15 +239,17 @@ AirGlass is a small, open-source app that mirrors your computer's screen, or a s
   </picture>
 </p>
 
-**5. A new QR code.** The phone shows "Bağlantı kesildi" (Disconnected). The QR code works only once, so the Mac shows a fresh one right away.
+**5. A new QR code.** The phone shows "Bağlantı kesildi" (Disconnected). The QR code works only once, so the computer shows a fresh one right away.
 
 <p align="center">
   <img src="docs/screenshots/phone-disconnected.png" alt="Disconnected screen on the phone" width="180">
 </p>
 
-<sub>Images are rendered from AirGlass's interface design.</sub>
+<sub>Images are rendered from AirGlass's interface design. On Windows the popover opens above the notification area icon, with the same content.</sub>
 
 ### Building from source
+
+#### macOS
 
 Requirements: macOS 14 (Sonoma) or later, Xcode 16 or later, [Homebrew](https://brew.sh).
 
@@ -286,63 +270,29 @@ make clean  # removes build output
 
 To work in Xcode, run `make project` and open the generated `AirGlass.xcodeproj`.
 
----
+#### Windows
 
-## Windows Installation
+Requirements: Windows 10 (2004) or later, [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
 
-**Windows 10+ (Build 19041) and Windows 11 are supported.**
-
-### Quick Start
-
-1. Install [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
-2. Clone and checkout Windows branch:
-   ```bash
-   git clone https://github.com/lupusoftco/airglass.git
-   cd airglass
-   git checkout windows-port
-   cd Windows
-   ```
-3. Build:
-   ```bash
-   dotnet restore
-   dotnet build -c Release
-   ```
-4. Run:
-   ```bash
-   dotnet run --project AirGlass.Windows
-   ```
-
-### Standalone EXE (Portable)
-
-```bash
-# Create executable:
-dotnet publish -c Release --runtime win-x64 --self-contained -o build/output
-
-# Run:
-./build/output/AirGlass.exe
+```powershell
+git clone https://github.com/lupusoftco/airglass.git
+cd airglass
+dotnet run --project Windows/AirGlass        # builds and launches AirGlass
+pwsh scripts/windows-publish.ps1             # creates and tests dist/AirGlass-<version>.exe
 ```
 
-### How to Use
-
-1. Start AirGlass → type **start**
-2. QR code appears
-3. Scan with iPhone camera → opens in Safari
-4. Your screen appears on iPhone
-5. Type **stop** to disconnect
-
-**Full guide**: [Windows/README.md](Windows/README.md)
-
----
+The Windows app lives in `Windows/AirGlass` (WPF, C#). The viewer page on the phone is shared by both apps: the files in `Viewer/` are embedded in the exe.
 
 ### Known limitations
 
-- **The Mac and the phone must be on the same Wi-Fi.** Connections only work on the local network.
-- **Guest networks and networks with client isolation don't work.** Hotel, café and corporate guest networks that stop devices from seeing each other keep the phone from reaching the Mac.
+- **The computer and the phone must be on the same Wi-Fi.** Connections only work on the local network.
+- **Guest networks and networks with client isolation don't work.** Hotel, café and corporate guest networks that stop devices from seeing each other keep the phone from reaching the computer.
 - **Keeping the screen awake may pause music.** Safari does not offer the Wake Lock API on pages served over http, so AirGlass plays an invisible, silent video after the first tap. That can pause music or podcasts playing on the phone. It isn't needed in fullscreen.
 - **No audio;** video only.
 - **One viewer at a time.**
 - **The page and the signaling travel over unencrypted HTTP on the local network;** the video itself is encrypted. The one-time key travels in the URL fragment (`#`), so it never appears in server logs or HTTP requests.
-- **The app is not notarized,** so the first launch needs the "Open Anyway" step.
+- **The app is not notarized (macOS) or signed (Windows),** so the first launch needs the "Open Anyway" step on macOS and "Run anyway" in SmartScreen on Windows.
+- **On Windows, Pencere seç** (pick a window), and **Tüm ekran** (whole screen) with more than one monitor, open Windows' own capture picker; on Windows 10 a yellow border marks what is being captured.
 
 ### License
 

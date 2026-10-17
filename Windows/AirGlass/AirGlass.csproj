@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <!-- Built against the Windows 11 SDK for the borderless capture API; runs on
+         Windows 10 2004 and later. -->
+    <TargetFramework>net8.0-windows10.0.22621.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <UseWPF>true</UseWPF>
+    <!-- Only for the notification area (tray) icon. -->
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <!-- WPF and Windows Forms share type names; usings are explicit. -->
+    <ImplicitUsings>disable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <!-- Direct3D / WinRT interop calls COM methods through vtables. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+    <AssemblyName>AirGlass</AssemblyName>
+    <RootNamespace>AirGlass</RootNamespace>
+    <ApplicationIcon>Assets\AirGlass.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+
+    <Version>0.2.0</Version>
+    <Product>AirGlass</Product>
+    <Company>Lupusoft</Company>
+    <Copyright>© 2026 Lupusoft</Copyright>
+    <Description>Mirror your screen to a phone on the same Wi-Fi.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\*.ico" />
+  </ItemGroup>
+
+  <!-- The phone-side viewer page, shared with the macOS app. -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\Viewer\*" LogicalName="Viewer/%(Filename)%(Extension)"
+                      Link="Viewer\%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="QRCoder" Version="1.8.1" />
+    <PackageReference Include="SIPSorcery" Version="10.0.17" />
+    <PackageReference Include="Vortice.Direct3D11" Version="3.8.3" />
+    <PackageReference Include="Vortice.MediaFoundation" Version="3.8.3" />
+  </ItemGroup>
+
+</Project>
