@@ -29,7 +29,7 @@ internal static class SelfTest
     public static async Task<int> RunAsync()
     {
         var units = Run("H.264 encoder", EncoderTest) ?? new List<byte[]>();
-        await RunAsync("GPU scaling and encoding", PipelineTestAsync);
+        await RunAsync("Scaling and encoding", PipelineTestAsync);
         await RunAsync("WebRTC loopback", () => LoopbackTestAsync(units));
 
         var path = Path.Combine(Path.GetDirectoryName(Log.FilePath)!, "self-test.txt");
@@ -66,7 +66,7 @@ internal static class SelfTest
             Usage = ResourceUsage.Default,
             BindFlags = BindFlags.ShaderResource | BindFlags.RenderTarget,
         };
-        using var texture = pipeline.Device.CreateTexture2D(ref description);
+        using var texture = pipeline.Device.CreateTexture2D(in description);
         var encoded = new TaskCompletionSource<byte[]>(TaskCreationOptions.RunContinuationsAsynchronously);
         pipeline.FrameEncoded += (unit, _) => encoded.TrySetResult(unit);
         pipeline.IsActive = true;

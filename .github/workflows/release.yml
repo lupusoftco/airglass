@@ -1,8 +1,9 @@
 name: Release
 
-# Builds the DMG and publishes a GitHub Release with the notes in
-# .github/release-notes/v<version>.md. Two ways to start it:
-#   - push a tag like v0.1.0, or
+# Builds the macOS DMG and the Windows EXE and publishes both in one GitHub
+# Release, with the notes in .github/release-notes/v<version>.md. Two ways
+# to start it:
+#   - push a tag like v0.2.0, or
 #   - run it from the Actions tab ("Run workflow") with a version; the tag
 #     v<version> is then created on the selected branch.
 on:
@@ -12,7 +13,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Version to release, e.g. 0.1.0 (must match MARKETING_VERSION)"
+        description: "Version to release, e.g. 0.2.0 (must match project.yml and the Windows csproj)"
         required: true
 
 permissions:
@@ -22,36 +23,76 @@ env:
   TAG: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.version) || github.ref_name }}
 
 jobs:
-  release:
-    runs-on: macos-15
+  check:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install XcodeGen
-        run: brew install xcodegen
-
-      - name: Check that the tag matches the app version
+      - name: Check that the tag matches both app versions
         run: |
-          version=$(grep -E '^\s*MARKETING_VERSION:' project.yml | sed -E 's/.*"([^"]+)".*/\1/')
-          if [ "v$version" != "$TAG" ]; then
-            echo "Tag $TAG does not match MARKETING_VERSION $version in project.yml" >&2
+          mac=$(grep -E '^\s*MARKETING_VERSION:' project.yml | sed -E 's/.*"([^"]+)".*/\1/')
+          win=$(sed -nE 's/.*<Version>([^<]+)<\/Version>.*/\1/p' Windows/AirGlass/AirGlass.csproj)
+          if [ "v$mac" != "$TAG" ]; then
+            echo "Tag $TAG does not match MARKETING_VERSION $mac in project.yml" >&2
+            exit 1
+          fi
+          if [ "v$win" != "$TAG" ]; then
+            echo "Tag $TAG does not match <Version> $win in Windows/AirGlass/AirGlass.csproj" >&2
             exit 1
           fi
           test -f ".github/release-notes/$TAG.md" || { echo "Missing .github/release-notes/$TAG.md" >&2; exit 1; }
 
+  macos:
+    needs: check
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
       - name: Build DMG
         run: scripts/make-dmg.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dmg
+          path: dist/*.dmg
+          if-no-files-found: error
 
+  windows:
+    needs: check
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: Build, package and smoke-test the EXE
+        shell: pwsh
+        run: ./scripts/windows-publish.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: exe
+          path: dist/AirGlass-*.exe
+          if-no-files-found: error
+
+  publish:
+    needs: [macos, windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          ls -l dist
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
             target=(--target "$GITHUB_SHA")   # creates the tag here
           else
             target=(--verify-tag)             # the pushed tag must exist
           fi
-          gh release create "$TAG" dist/*.dmg \
+          gh release create "$TAG" dist/*.dmg dist/*.exe \
             --title "AirGlass ${TAG#v}" \
             --notes-file ".github/release-notes/$TAG.md" \
             "${target[@]}"

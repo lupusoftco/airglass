@@ -30,8 +30,10 @@ public sealed class VideoPipeline : IFrameConsumer, IDisposable
     private static readonly TimeSpan FrameInterval = TimeSpan.FromSeconds(1.0 / FramesPerSecond);
 
     private readonly ID3D11DeviceContext _context;
-    private readonly ID3D11VideoDevice _videoDevice;
-    private readonly ID3D11VideoContext _videoContext;
+    /// <summary>Null without GPU video processing (e.g. remote desktop or the
+    /// basic display driver); frames are then converted on the CPU.</summary>
+    private readonly ID3D11VideoDevice? _videoDevice;
+    private readonly ID3D11VideoContext? _videoContext;
     /// <summary>Guards the latest frame and the GPU work on it.</summary>
     private readonly object _gpu = new();
     private readonly AutoResetEvent _wake = new(false);
@@ -41,7 +43,7 @@ public sealed class VideoPipeline : IFrameConsumer, IDisposable
     private ID3D11Texture2D? _latest;
     private int _latestWidth, _latestHeight;
     private bool _hasNewFrame;
-    private Converter? _converter;
+    private IConverter? _converter;
     private H264Encoder? _encoder;
     private TimeSpan _lastEncoded = TimeSpan.MinValue;
     private volatile bool _isActive;
@@ -52,8 +54,14 @@ public sealed class VideoPipeline : IFrameConsumer, IDisposable
     {
         Device = Direct3D.CreateDevice();
         _context = Device.ImmediateContext;
-        _videoDevice = Device.QueryInterface<ID3D11VideoDevice>();
-        _videoContext = _context.QueryInterface<ID3D11VideoContext>();
+        _videoDevice = Device.QueryInterfaceOrNull<ID3D11VideoDevice>();
+        _videoContext = _videoDevice == null ? null : _context.QueryInterfaceOrNull<ID3D11VideoContext>();
+        if (_videoContext == null)
+        {
+            _videoDevice?.Dispose();
+            _videoDevice = null;
+            Log.Capture("No GPU video processor; converting frames on the CPU");
+        }
         _worker = new Thread(Run) { IsBackground = true, Name = "AirGlass video", Priority = ThreadPriority.AboveNormal };
         _worker.Start();
     }
@@ -107,7 +115,7 @@ public sealed class VideoPipeline : IFrameConsumer, IDisposable
                     Usage = ResourceUsage.Default,
                     BindFlags = BindFlags.ShaderResource | BindFlags.RenderTarget,
                 };
-                _latest = Device.CreateTexture2D(ref copy);
+                _latest = Device.CreateTexture2D(in copy);
             }
             _context.CopyResource(_latest, texture);
             _latestWidth = Math.Min(width, (int)description.Width);
@@ -184,7 +192,9 @@ public sealed class VideoPipeline : IFrameConsumer, IDisposable
             if (_converter == null || !_converter.Matches(_latest, _latestWidth, _latestHeight, width, height))
             {
                 _converter?.Dispose();
-                _converter = new Converter(Device, _context, _videoDevice, _videoContext, _latest, _latestWidth, _latestHeight, width, height);
+                _converter = _videoDevice != null && _videoContext != null
+                    ? new GpuConverter(Device, _context, _videoDevice, _videoContext, _latest, _latestWidth, _latestHeight, width, height)
+                    : new CpuConverter(Device, _context, _latest, _latestWidth, _latestHeight, width, height);
             }
             nv12 = _converter.Convert();
         }
@@ -219,11 +229,18 @@ public sealed class VideoPipeline : IFrameConsumer, IDisposable
     [DllImport("ole32.dll")]
     private static extern int CoInitializeEx(IntPtr reserved, uint coInit);
 
+    /// <summary>Scales and converts the latest BGRA frame to tightly packed NV12.</summary>
+    private interface IConverter : IDisposable
+    {
+        bool Matches(ID3D11Texture2D source, int sourceWidth, int sourceHeight, int width, int height);
+        byte[] Convert();
+    }
+
     /// <summary>
     /// Scales and converts one BGRA texture to NV12 with the GPU's video
     /// processor and reads the result back for the encoder.
     /// </summary>
-    private sealed class Converter : IDisposable
+    private sealed class GpuConverter : IConverter
     {
         private readonly ID3D11DeviceContext _context;
         private readonly ID3D11VideoContext _videoContext;
@@ -237,7 +254,7 @@ public sealed class VideoPipeline : IFrameConsumer, IDisposable
         private readonly ID3D11Texture2D _staging;
         private readonly byte[] _frame;
 
-        public Converter(ID3D11Device device, ID3D11DeviceContext context, ID3D11VideoDevice videoDevice,
+        public GpuConverter(ID3D11Device device, ID3D11DeviceContext context, ID3D11VideoDevice videoDevice,
             ID3D11VideoContext videoContext, ID3D11Texture2D source, int sourceWidth, int sourceHeight, int width, int height)
         {
             _context = context;
@@ -282,7 +299,7 @@ public sealed class VideoPipeline : IFrameConsumer, IDisposable
                 Usage = ResourceUsage.Default,
                 BindFlags = BindFlags.RenderTarget,
             };
-            _output = device.CreateTexture2D(ref outputDescription);
+            _output = device.CreateTexture2D(in outputDescription);
             _outputView = videoDevice.CreateVideoProcessorOutputView(_output, _enumerator, new VideoProcessorOutputViewDescription
             {
                 ViewDimension = VideoProcessorOutputViewDimension.Texture2D,
@@ -292,7 +309,7 @@ public sealed class VideoPipeline : IFrameConsumer, IDisposable
             stagingDescription.Usage = ResourceUsage.Staging;
             stagingDescription.BindFlags = BindFlags.None;
             stagingDescription.CPUAccessFlags = CpuAccessFlags.Read;
-            _staging = device.CreateTexture2D(ref stagingDescription);
+            _staging = device.CreateTexture2D(in stagingDescription);
 
             _videoContext.VideoProcessorSetStreamFrameFormat(_processor, 0, VideoFrameFormat.Progressive);
             _videoContext.VideoProcessorSetStreamAutoProcessingMode(_processor, 0, false);
@@ -339,5 +356,97 @@ public sealed class VideoPipeline : IFrameConsumer, IDisposable
             _processor.Dispose();
             _enumerator.Dispose();
         }
+    }
+
+    /// <summary>
+    /// The fallback without GPU video processing: reads the BGRA frame back
+    /// and scales (averaging 2×2 source pixels) and converts it on the CPU,
+    /// with the same BT.601 studio-range result as the video processor.
+    /// </summary>
+    private sealed unsafe class CpuConverter : IConverter
+    {
+        private readonly ID3D11DeviceContext _context;
+        private readonly ID3D11Texture2D _source;
+        private readonly int _sourceWidth, _sourceHeight, _width, _height;
+        private readonly ID3D11Texture2D _staging;
+        private readonly byte[] _frame;
+
+        public CpuConverter(ID3D11Device device, ID3D11DeviceContext context, ID3D11Texture2D source,
+            int sourceWidth, int sourceHeight, int width, int height)
+        {
+            _context = context;
+            _source = source;
+            _sourceWidth = sourceWidth;
+            _sourceHeight = sourceHeight;
+            _width = width;
+            _height = height;
+            _frame = new byte[width * height * 3 / 2];
+
+            var description = source.Description;
+            description.Usage = ResourceUsage.Staging;
+            description.BindFlags = BindFlags.None;
+            description.CPUAccessFlags = CpuAccessFlags.Read;
+            description.MiscFlags = ResourceOptionFlags.None;
+            _staging = device.CreateTexture2D(in description);
+        }
+
+        public bool Matches(ID3D11Texture2D source, int sourceWidth, int sourceHeight, int width, int height) =>
+            source == _source && sourceWidth == _sourceWidth && sourceHeight == _sourceHeight
+            && width == _width && height == _height;
+
+        public byte[] Convert()
+        {
+            _context.CopyResource(_staging, _source);
+            var mapped = _context.Map(_staging, 0, MapMode.Read, Vortice.Direct3D11.MapFlags.None);
+            try
+            {
+                var pixels = (byte*)mapped.DataPointer;
+                var pitch = (int)mapped.RowPitch;
+                fixed (byte* frame = _frame)
+                {
+                    var chroma = frame + _width * _height;
+                    for (var y = 0; y < _height; y += 2)
+                    for (var x = 0; x < _width; x += 2)
+                    {
+                        int sumR = 0, sumG = 0, sumB = 0;
+                        for (var dy = 0; dy < 2; dy++)
+                        for (var dx = 0; dx < 2; dx++)
+                        {
+                            Sample(pixels, pitch, x + dx, y + dy, out var r, out var g, out var b);
+                            frame[(y + dy) * _width + x + dx] = (byte)(((66 * r + 129 * g + 25 * b + 128) >> 8) + 16);
+                            sumR += r;
+                            sumG += g;
+                            sumB += b;
+                        }
+                        int red = sumR >> 2, green = sumG >> 2, blue = sumB >> 2;
+                        var uv = chroma + (y / 2) * _width + x;
+                        uv[0] = (byte)(((-38 * red - 74 * green + 112 * blue + 128) >> 8) + 128);
+                        uv[1] = (byte)(((112 * red - 94 * green - 18 * blue + 128) >> 8) + 128);
+                    }
+                }
+            }
+            finally
+            {
+                _context.Unmap(_staging, 0);
+            }
+            return _frame;
+        }
+
+        /// <summary>The average of the 2×2 source pixels under output pixel (x, y).</summary>
+        private void Sample(byte* pixels, int pitch, int x, int y, out int r, out int g, out int b)
+        {
+            var sourceX = Math.Min((int)((x + 0.5) * _sourceWidth / _width - 0.5), _sourceWidth - 2);
+            var sourceY = Math.Min((int)((y + 0.5) * _sourceHeight / _height - 0.5), _sourceHeight - 2);
+            sourceX = Math.Max(sourceX, 0);
+            sourceY = Math.Max(sourceY, 0);
+            var top = pixels + sourceY * pitch + sourceX * 4;
+            var bottom = top + pitch;
+            // BGRA
+            b = (top[0] + top[4] + bottom[0] + bottom[4]) >> 2;
+            g = (top[1] + top[5] + bottom[1] + bottom[5]) >> 2;
+            r = (top[2] + top[6] + bottom[2] + bottom[6]) >> 2;
+        }
+
+        public void Dispose() => _staging.Dispose();
     }
 }
