@@ -1,0 +1,321 @@
+{
+  "_comment": "Interface texts for the macOS and Windows apps. Every key needs all five languages. {0} is replaced with a value.",
+  "languages": [
+    {
+      "code": "tr",
+      "name": "Türkçe"
+    },
+    {
+      "code": "en",
+      "name": "English"
+    },
+    {
+      "code": "zh-Hans",
+      "name": "中文（普通话）"
+    },
+    {
+      "code": "hi",
+      "name": "हिन्दी"
+    },
+    {
+      "code": "es",
+      "name": "Español"
+    }
+  ],
+  "strings": {
+    "about": {
+      "tr": "AirGlass Hakkında",
+      "en": "About AirGlass",
+      "zh-Hans": "关于 AirGlass",
+      "hi": "AirGlass के बारे में",
+      "es": "Acerca de AirGlass"
+    },
+    "settings": {
+      "tr": "Ayarlar…",
+      "en": "Settings…",
+      "zh-Hans": "设置…",
+      "hi": "सेटिंग्स…",
+      "es": "Ajustes…"
+    },
+    "settings.title": {
+      "tr": "Ayarlar",
+      "en": "Settings",
+      "zh-Hans": "设置",
+      "hi": "सेटिंग्स",
+      "es": "Ajustes"
+    },
+    "settings.language": {
+      "tr": "Dil",
+      "en": "Language",
+      "zh-Hans": "语言",
+      "hi": "भाषा",
+      "es": "Idioma"
+    },
+    "quit": {
+      "tr": "Çıkış",
+      "en": "Quit",
+      "zh-Hans": "退出",
+      "hi": "बंद करें",
+      "es": "Salir"
+    },
+    "status.waiting": {
+      "tr": "Bekliyor",
+      "en": "Waiting",
+      "zh-Hans": "等待中",
+      "hi": "प्रतीक्षा में",
+      "es": "En espera"
+    },
+    "status.live": {
+      "tr": "Yayında",
+      "en": "Live",
+      "zh-Hans": "直播中",
+      "hi": "लाइव",
+      "es": "En directo"
+    },
+    "status.permission": {
+      "tr": "İzin gerekli",
+      "en": "Permission needed",
+      "zh-Hans": "需要权限",
+      "hi": "अनुमति चाहिए",
+      "es": "Se necesita permiso"
+    },
+    "status.offline": {
+      "tr": "Çevrimdışı",
+      "en": "Offline",
+      "zh-Hans": "离线",
+      "hi": "ऑफ़लाइन",
+      "es": "Sin conexión"
+    },
+    "scan": {
+      "tr": "Telefonunun kamerasıyla okut",
+      "en": "Scan with your phone's camera",
+      "zh-Hans": "用手机相机扫描",
+      "hi": "अपने फ़ोन के कैमरे से स्कैन करें",
+      "es": "Escanéalo con la cámara del teléfono"
+    },
+    "copyLink": {
+      "tr": "Linki kopyala",
+      "en": "Copy link",
+      "zh-Hans": "复制链接",
+      "hi": "लिंक कॉपी करें",
+      "es": "Copiar enlace"
+    },
+    "copied": {
+      "tr": "Kopyalandı",
+      "en": "Copied",
+      "zh-Hans": "已复制",
+      "hi": "कॉपी हो गया",
+      "es": "Copiado"
+    },
+    "source": {
+      "tr": "Kaynak",
+      "en": "Source",
+      "zh-Hans": "来源",
+      "hi": "स्रोत",
+      "es": "Origen"
+    },
+    "fullScreen": {
+      "tr": "Tüm ekran",
+      "en": "Whole screen",
+      "zh-Hans": "整个屏幕",
+      "hi": "पूरी स्क्रीन",
+      "es": "Pantalla completa"
+    },
+    "pickWindow": {
+      "tr": "Pencere seç",
+      "en": "Pick a window",
+      "zh-Hans": "选择窗口",
+      "hi": "विंडो चुनें",
+      "es": "Elegir ventana"
+    },
+    "window": {
+      "tr": "Pencere",
+      "en": "Window",
+      "zh-Hans": "窗口",
+      "hi": "विंडो",
+      "es": "Ventana"
+    },
+    "screen": {
+      "tr": "Ekran",
+      "en": "Screen",
+      "zh-Hans": "屏幕",
+      "hi": "स्क्रीन",
+      "es": "Pantalla"
+    },
+    "change": {
+      "tr": "Değiştir…",
+      "en": "Change…",
+      "zh-Hans": "更改…",
+      "hi": "बदलें…",
+      "es": "Cambiar…"
+    },
+    "stop": {
+      "tr": "Durdur",
+      "en": "Stop",
+      "zh-Hans": "停止",
+      "hi": "रोकें",
+      "es": "Detener"
+    },
+    "connected": {
+      "tr": "Bağlı · {0}",
+      "en": "Connected · {0}",
+      "zh-Hans": "已连接 · {0}",
+      "hi": "कनेक्टेड · {0}",
+      "es": "Conectado · {0}"
+    },
+    "sharing": {
+      "tr": "Yayınlanan",
+      "en": "Sharing",
+      "zh-Hans": "正在共享",
+      "hi": "शेयर हो रहा है",
+      "es": "Compartiendo"
+    },
+    "disconnect": {
+      "tr": "Bağlantıyı kes",
+      "en": "Disconnect",
+      "zh-Hans": "断开连接",
+      "hi": "डिस्कनेक्ट करें",
+      "es": "Desconectar"
+    },
+    "permission.title": {
+      "tr": "Ekran Kaydı izni gerekli",
+      "en": "Screen Recording permission needed",
+      "zh-Hans": "需要屏幕录制权限",
+      "hi": "स्क्रीन रिकॉर्डिंग की अनुमति चाहिए",
+      "es": "Se necesita permiso de grabación de pantalla"
+    },
+    "permission.body": {
+      "tr": "AirGlass'ın ekranını yansıtabilmesi için Sistem Ayarları › Gizlilik ve Güvenlik › Ekran ve Sistem Sesi Kaydı bölümünden izin ver.",
+      "en": "To mirror your screen, allow AirGlass in System Settings › Privacy & Security › Screen & System Audio Recording.",
+      "zh-Hans": "要镜像你的屏幕，请在“系统设置” › “隐私与安全性” › “录屏与系统录音”中允许 AirGlass。",
+      "hi": "स्क्रीन मिरर करने के लिए सिस्टम सेटिंग्स › गोपनीयता और सुरक्षा › स्क्रीन और सिस्टम ऑडियो रिकॉर्डिंग में AirGlass को अनुमति दें।",
+      "es": "Para reflejar tu pantalla, permite AirGlass en Ajustes del Sistema › Privacidad y seguridad › Grabación de pantalla y audio del sistema."
+    },
+    "permission.open": {
+      "tr": "Sistem Ayarları'nı aç",
+      "en": "Open System Settings",
+      "zh-Hans": "打开系统设置",
+      "hi": "सिस्टम सेटिंग्स खोलें",
+      "es": "Abrir Ajustes del Sistema"
+    },
+    "permission.note": {
+      "tr": "İzni verdikten sonra AirGlass yeniden başlatılabilir.",
+      "en": "After you allow it, AirGlass may need to restart.",
+      "zh-Hans": "授予权限后，可能需要重新启动 AirGlass。",
+      "hi": "अनुमति देने के बाद AirGlass को फिर से शुरू करना पड़ सकता है।",
+      "es": "Después de dar permiso, puede que haya que reiniciar AirGlass."
+    },
+    "offline.hint.mac": {
+      "tr": "Mac ve telefon aynı ağa bağlandığında QR kod burada görünür.",
+      "en": "The QR code appears here once the Mac and the phone are on the same network.",
+      "zh-Hans": "Mac 和手机连接到同一网络后，二维码会显示在这里。",
+      "hi": "Mac और फ़ोन एक ही नेटवर्क पर होने पर QR कोड यहाँ दिखेगा।",
+      "es": "El código QR aparecerá aquí cuando el Mac y el teléfono estén en la misma red."
+    },
+    "offline.hint.pc": {
+      "tr": "Bilgisayar ve telefon aynı ağa bağlandığında QR kod burada görünür.",
+      "en": "The QR code appears here once the computer and the phone are on the same network.",
+      "zh-Hans": "电脑和手机连接到同一网络后，二维码会显示在这里。",
+      "hi": "कंप्यूटर और फ़ोन एक ही नेटवर्क पर होने पर QR कोड यहाँ दिखेगा।",
+      "es": "El código QR aparecerá aquí cuando el ordenador y el teléfono estén en la misma red."
+    },
+    "offline.noNetwork": {
+      "tr": "Wi-Fi veya Ethernet bağlantısı yok",
+      "en": "No Wi-Fi or Ethernet connection",
+      "zh-Hans": "没有 Wi-Fi 或以太网连接",
+      "hi": "कोई Wi-Fi या ईथरनेट कनेक्शन नहीं",
+      "es": "Sin conexión Wi-Fi ni Ethernet"
+    },
+    "offline.serverFailed": {
+      "tr": "Yerel sunucu başlatılamadı",
+      "en": "The local server couldn't start",
+      "zh-Hans": "无法启动本地服务器",
+      "hi": "लोकल सर्वर शुरू नहीं हो सका",
+      "es": "No se pudo iniciar el servidor local"
+    },
+    "offline.starting": {
+      "tr": "Yerel sunucu başlatılıyor…",
+      "en": "Starting the local server…",
+      "zh-Hans": "正在启动本地服务器…",
+      "hi": "लोकल सर्वर शुरू हो रहा है…",
+      "es": "Iniciando el servidor local…"
+    },
+    "browser": {
+      "tr": "Tarayıcı",
+      "en": "Browser",
+      "zh-Hans": "浏览器",
+      "hi": "ब्राउज़र",
+      "es": "Navegador"
+    },
+    "a11y.qr": {
+      "tr": "Bağlantı QR kodu",
+      "en": "Connection QR code",
+      "zh-Hans": "连接二维码",
+      "hi": "कनेक्शन QR कोड",
+      "es": "Código QR de conexión"
+    },
+    "a11y.sourceType": {
+      "tr": "Kaynak türü",
+      "en": "Source type",
+      "zh-Hans": "来源类型",
+      "hi": "स्रोत का प्रकार",
+      "es": "Tipo de origen"
+    },
+    "watching": {
+      "tr": "AirGlass – izleniyor",
+      "en": "AirGlass – being watched",
+      "zh-Hans": "AirGlass – 正在被观看",
+      "hi": "AirGlass – देखा जा रहा है",
+      "es": "AirGlass – en visualización"
+    },
+    "version": {
+      "tr": "Sürüm {0}",
+      "en": "Version {0}",
+      "zh-Hans": "版本 {0}",
+      "hi": "संस्करण {0}",
+      "es": "Versión {0}"
+    },
+    "developedBy": {
+      "tr": "Geliştiren: Lupusoft",
+      "en": "Developed by Lupusoft",
+      "zh-Hans": "由 Lupusoft 开发",
+      "hi": "Lupusoft द्वारा विकसित",
+      "es": "Desarrollado por Lupusoft"
+    },
+    "license": {
+      "tr": "MIT Lisansı",
+      "en": "MIT License",
+      "zh-Hans": "MIT 许可证",
+      "hi": "MIT लाइसेंस",
+      "es": "Licencia MIT"
+    },
+    "capture.unsupported": {
+      "tr": "Bu Windows sürümünde ekran yakalama desteklenmiyor",
+      "en": "Screen capture isn't supported on this version of Windows",
+      "zh-Hans": "此版本的 Windows 不支持屏幕捕获",
+      "hi": "Windows के इस संस्करण में स्क्रीन कैप्चर समर्थित नहीं है",
+      "es": "Esta versión de Windows no admite la captura de pantalla"
+    },
+    "capture.pickFailed": {
+      "tr": "Kaynak seçilemedi",
+      "en": "Couldn't choose a source",
+      "zh-Hans": "无法选择来源",
+      "hi": "स्रोत नहीं चुना जा सका",
+      "es": "No se pudo elegir el origen"
+    },
+    "capture.startFailed": {
+      "tr": "Yakalama başlatılamadı",
+      "en": "Couldn't start capturing",
+      "zh-Hans": "无法开始捕获",
+      "hi": "कैप्चर शुरू नहीं हो सका",
+      "es": "No se pudo iniciar la captura"
+    },
+    "capture.unavailable": {
+      "tr": "Ekran yakalama bu bilgisayarda kullanılamıyor",
+      "en": "Screen capture isn't available on this computer",
+      "zh-Hans": "此电脑无法使用屏幕捕获",
+      "hi": "इस कंप्यूटर पर स्क्रीन कैप्चर उपलब्ध नहीं है",
+      "es": "La captura de pantalla no está disponible en este ordenador"
+    }
+  }
+}

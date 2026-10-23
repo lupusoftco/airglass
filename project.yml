@@ -9,8 +9,8 @@ options:
 settings:
   base:
     SWIFT_VERSION: "5.0"
-    MARKETING_VERSION: "0.2.0"
-    CURRENT_PROJECT_VERSION: "4"
+    MARKETING_VERSION: "0.3.0"
+    CURRENT_PROJECT_VERSION: "5"
 
 packages:
   WebRTC:
@@ -28,6 +28,9 @@ targets:
       # Phone-side viewer page, copied as Resources/Viewer.
       - path: Viewer
         type: folder
+        buildPhase: resources
+      # Interface texts, shared with the Windows app.
+      - path: Localization/Strings.json
         buildPhase: resources
     dependencies:
       - package: WebRTC

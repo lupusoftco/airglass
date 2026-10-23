@@ -5,6 +5,13 @@ on:
   pull_request:
 
 jobs:
+  strings:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check interface texts (Localization/Strings.json)
+        run: python3 scripts/check-strings.py
+
   macos:
     runs-on: macos-15
     steps:

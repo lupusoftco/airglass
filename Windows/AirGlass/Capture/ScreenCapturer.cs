@@ -19,6 +19,7 @@ public abstract record CaptureState
 {
     public sealed record Idle : CaptureState;
     public sealed record Capturing(CaptureSource Source) : CaptureState;
+    /// <summary><paramref name="Message"/> is a Localization/Strings.json key.</summary>
     public sealed record Failed(string Message) : CaptureState;
 }
 
@@ -68,7 +69,7 @@ public sealed class ScreenCapturer
     {
         if (!GraphicsCaptureSession.IsSupported())
         {
-            Report(new CaptureState.Failed("Bu Windows sürümünde ekran yakalama desteklenmiyor"));
+            Report(new CaptureState.Failed("capture.unsupported"));
             return;
         }
 
@@ -95,7 +96,7 @@ public sealed class ScreenCapturer
         catch (Exception error)
         {
             Log.Capture($"Choosing a source failed: {error}");
-            Report(new CaptureState.Failed("Kaynak seçilemedi"));
+            Report(new CaptureState.Failed("capture.pickFailed"));
             return;
         }
 
@@ -143,7 +144,7 @@ public sealed class ScreenCapturer
         {
             Log.Capture($"Starting capture failed: {error}");
             StopSession();
-            Report(new CaptureState.Failed("Yakalama başlatılamadı"));
+            Report(new CaptureState.Failed("capture.startFailed"));
             return;
         }
 

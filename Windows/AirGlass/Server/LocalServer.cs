@@ -82,7 +82,7 @@ public sealed class LocalServer
             _ = AcceptLoop(listener);
             return;
         }
-        Report(new ServerState.Failed("Boş port bulunamadı"));
+        Report(new ServerState.Failed("No free port"));
     }
 
     private async Task AcceptLoop(TcpListener listener)
@@ -317,7 +317,7 @@ public sealed class LocalServer
     /// <summary>"iPhone — Safari" from a User-Agent header.</summary>
     private static string DeviceName(string? userAgent)
     {
-        if (userAgent == null) return "Tarayıcı";
+        if (userAgent == null) return Localizer.T("browser");
 
         string device;
         if (userAgent.Contains("iPhone")) device = "iPhone";
@@ -325,7 +325,7 @@ public sealed class LocalServer
         else if (userAgent.Contains("Android")) device = "Android";
         // iPadOS Safari reports itself as a Mac.
         else if (userAgent.Contains("Macintosh")) device = "iPad / Mac";
-        else device = "Tarayıcı";
+        else device = Localizer.T("browser");
 
         string? browser;
         // Order matters: Edge and Chrome also claim to be Safari, Edge also Chrome.

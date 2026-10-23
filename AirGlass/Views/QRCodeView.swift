@@ -23,6 +23,6 @@ struct QRCodeView: View {
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .strokeBorder(Color.black.opacity(0.08), lineWidth: 0.5)
         )
-        .accessibilityLabel("Bağlantı QR kodu")
+        .accessibilityLabel(L("a11y.qr"))
     }
 }

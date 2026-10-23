@@ -37,6 +37,12 @@ public partial class PopoverWindow : Window
         InitializeComponent();
         _state = state;
         _state.PropertyChanged += OnStateChanged;
+        Localizer.Changed += () =>
+        {
+            ShowCopied(_copyReset.IsEnabled);
+            Render();
+        };
+        ShowCopied(false);
 
         _copyReset.Tick += (_, _) =>
         {
@@ -99,9 +105,9 @@ public partial class PopoverWindow : Window
         // Status badge: hollow dot when waiting or offline, green when live.
         StatusText.Text = mode switch
         {
-            PopoverMode.Connected => "Yayında",
-            PopoverMode.Offline => "Çevrimdışı",
-            _ => "Bekliyor",
+            PopoverMode.Connected => Localizer.T("status.live"),
+            PopoverMode.Offline => Localizer.T("status.offline"),
+            _ => Localizer.T("status.waiting"),
         };
         if (mode == PopoverMode.Connected)
         {
@@ -125,7 +131,7 @@ public partial class PopoverWindow : Window
         OfflineText.Text = _state.OfflineMessage ?? "";
 
         DeviceText.Text = _state.ViewerDevice ?? "";
-        DeviceAddressText.Text = $"Bağlı · {_state.ViewerAddress}";
+        DeviceAddressText.Text = Localizer.T("connected", _state.ViewerAddress);
 
         var capturing = (_state.CaptureState as CaptureState.Capturing)?.Source;
         WaitingCapturePanel.Visibility = capturing != null ? Visibility.Visible : Visibility.Collapsed;
@@ -137,7 +143,7 @@ public partial class PopoverWindow : Window
             ShowSource(capturing, ConnectedSourceIcon, ConnectedSourceName, ConnectedSourceKind);
         }
         var failure = (_state.CaptureState as CaptureState.Failed)?.Message;
-        CaptureFailedText.Text = failure ?? "";
+        CaptureFailedText.Text = failure != null ? Localizer.T(failure) : "";
         CaptureFailedText.Visibility = failure != null ? Visibility.Visible : Visibility.Collapsed;
 
         var fullScreen = _state.CaptureMode == CaptureMode.FullScreen;
@@ -159,7 +165,7 @@ public partial class PopoverWindow : Window
         icon.Data = source.IsWindow ? WindowIcon : DisplayIcon;
         name.Text = source.Name;
         name.ToolTip = source.Name;
-        kind.Text = source.IsWindow ? "Pencere" : "Tüm ekran";
+        kind.Text = source.IsWindow ? Localizer.T("window") : Localizer.T("fullScreen");
     }
 
     private void OnStateChanged(object? sender, PropertyChangedEventArgs e)
@@ -192,7 +198,7 @@ public partial class PopoverWindow : Window
             CopyIcon.SetResourceReference(System.Windows.Controls.TextBlock.ForegroundProperty, "GreenBrush");
         else
             CopyIcon.ClearValue(System.Windows.Controls.TextBlock.ForegroundProperty);
-        CopyText.Text = copied ? "Kopyalandı" : "Linki kopyala";
+        CopyText.Text = copied ? Localizer.T("copied") : Localizer.T("copyLink");
     }
 
     // Every click opens the source picker, also on the already selected side.
@@ -212,6 +218,12 @@ public partial class PopoverWindow : Window
         AboutWindow.ShowSingle();
     }
 
+    private void OnSettings(object sender, RoutedEventArgs e)
+    {
+        HideNow();
+        SettingsWindow.ShowSingle();
+    }
+
     private void OnQuit(object sender, RoutedEventArgs e) => QuitRequested?.Invoke();
 
     private void OnKeyDown(object sender, KeyEventArgs e)
@@ -219,6 +231,12 @@ public partial class PopoverWindow : Window
         if (e.Key == Key.Escape)
         {
             HideNow();
+            e.Handled = true;
+        }
+        else if (e.Key == Key.OemComma && Keyboard.Modifiers == ModifierKeys.Control)
+        {
+            HideNow();
+            SettingsWindow.ShowSingle();
             e.Handled = true;
         }
         else if (e.Key == Key.Q && Keyboard.Modifiers == ModifierKeys.Control)

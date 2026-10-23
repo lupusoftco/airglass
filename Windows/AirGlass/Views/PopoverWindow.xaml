@@ -35,7 +35,7 @@
           <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
             <Ellipse x:Name="StatusDot" Width="7" Height="7" StrokeThickness="1.5"
                      Stroke="{DynamicResource SecondaryTextBrush}" VerticalAlignment="Center" />
-            <TextBlock x:Name="StatusText" Text="Bekliyor" Margin="6,0,0,0" FontSize="11" FontWeight="Medium"
+            <TextBlock x:Name="StatusText" Margin="6,0,0,0" FontSize="11" FontWeight="Medium"
                        Foreground="{DynamicResource SecondaryTextBrush}" VerticalAlignment="Center" />
           </StackPanel>
         </Grid>
@@ -51,7 +51,7 @@
                 <Image x:Name="QrImage" Width="148" Height="148"
                        RenderOptions.BitmapScalingMode="NearestNeighbor" />
               </Border>
-              <TextBlock Text="Telefonunun kamerasıyla okut" Margin="0,10,0,0" HorizontalAlignment="Center"
+              <TextBlock Text="{DynamicResource S.scan}" Margin="0,10,0,0" HorizontalAlignment="Center"
                          FontSize="12" FontWeight="Medium" Foreground="{DynamicResource TextBrush}" />
               <TextBlock x:Name="HostText" Margin="0,2,0,0" HorizontalAlignment="Center"
                          FontFamily="{DynamicResource MonoFont}" FontSize="11"
@@ -64,18 +64,18 @@
             <StackPanel Orientation="Horizontal">
               <TextBlock x:Name="CopyIcon" Text="&#xE8C8;" FontFamily="{DynamicResource IconFont}" FontSize="13"
                          VerticalAlignment="Center" Margin="0,1,6,0" />
-              <TextBlock x:Name="CopyText" Text="Linki kopyala" VerticalAlignment="Center" />
+              <TextBlock x:Name="CopyText" VerticalAlignment="Center" />
             </StackPanel>
           </Button>
 
           <Rectangle Style="{StaticResource SeparatorLine}" />
-          <TextBlock Text="Kaynak" Style="{StaticResource SectionLabel}" />
+          <TextBlock Text="{DynamicResource S.source}" Style="{StaticResource SectionLabel}" />
           <!-- "Tüm ekran / Pencere seç" -->
           <Border Margin="4,0,4,10" Padding="2" CornerRadius="8" Background="{DynamicResource SegmentTrackBrush}">
             <UniformGrid Columns="2">
-              <ToggleButton x:Name="FullScreenSegment" Content="Tüm ekran" Margin="0,0,1,0"
+              <ToggleButton x:Name="FullScreenSegment" Content="{DynamicResource S.fullScreen}" Margin="0,0,1,0"
                             Style="{StaticResource SegmentButton}" Click="OnFullScreenSegment" />
-              <ToggleButton x:Name="WindowSegment" Content="Pencere seç" Margin="1,0,0,0"
+              <ToggleButton x:Name="WindowSegment" Content="{DynamicResource S.pickWindow}" Margin="1,0,0,0"
                             Style="{StaticResource SegmentButton}" Click="OnWindowSegment" />
             </UniformGrid>
           </Border>
@@ -99,11 +99,11 @@
           </Grid>
             <UniformGrid Columns="2" Margin="4,0,4,10">
               <Button Style="{StaticResource ControlButton}" Height="24" Margin="0,0,3,0" Click="OnChangeSource">
-                <TextBlock Text="Değiştir…" />
+                <TextBlock Text="{DynamicResource S.change}" />
               </Button>
               <Button Style="{StaticResource ControlButton}" Height="24" Margin="3,0,0,0"
                       Foreground="{DynamicResource RedBrush}" Click="OnStopCapture">
-                <TextBlock Text="Durdur" />
+                <TextBlock Text="{DynamicResource S.stop}" />
               </Button>
             </UniformGrid>
           </StackPanel>
@@ -134,7 +134,7 @@
             </StackPanel>
           </Border>
 
-          <TextBlock Text="Yayınlanan" Style="{StaticResource SectionLabel}" />
+          <TextBlock Text="{DynamicResource S.sharing}" Style="{StaticResource SectionLabel}" />
           <StackPanel x:Name="ConnectedSourcePanel" Visibility="Collapsed">
             <Grid Margin="4,0,4,10">
             <Grid.ColumnDefinitions>
@@ -156,16 +156,16 @@
           <!-- "Tüm ekran / Pencere seç" -->
           <Border x:Name="ConnectedPicker" Margin="4,0,4,10" Padding="2" CornerRadius="8" Background="{DynamicResource SegmentTrackBrush}">
             <UniformGrid Columns="2">
-              <ToggleButton x:Name="ConnectedFullScreenSegment" Content="Tüm ekran" Margin="0,0,1,0"
+              <ToggleButton x:Name="ConnectedFullScreenSegment" Content="{DynamicResource S.fullScreen}" Margin="0,0,1,0"
                             Style="{StaticResource SegmentButton}" Click="OnFullScreenSegment" />
-              <ToggleButton x:Name="ConnectedWindowSegment" Content="Pencere seç" Margin="1,0,0,0"
+              <ToggleButton x:Name="ConnectedWindowSegment" Content="{DynamicResource S.pickWindow}" Margin="1,0,0,0"
                             Style="{StaticResource SegmentButton}" Click="OnWindowSegment" />
             </UniformGrid>
           </Border>
 
           <Button Style="{StaticResource ControlButton}" Height="32" Margin="4,2,4,10"
                   Background="{DynamicResource RedBrush}" Foreground="White" Click="OnDisconnect">
-            <TextBlock Text="Bağlantıyı kes" />
+            <TextBlock Text="{DynamicResource S.disconnect}" />
           </Button>
         </StackPanel>
 
@@ -192,7 +192,7 @@
             </Grid>
             <TextBlock Margin="16,10,16,0" Width="196" FontSize="11" TextAlignment="Center" TextWrapping="Wrap"
                        Foreground="{DynamicResource SecondaryTextBrush}"
-                       Text="Bilgisayar ve telefon aynı ağa bağlandığında QR kod burada görünür." />
+                       Text="{DynamicResource S.offline.hint.pc}" />
           </StackPanel>
         </Border>
 
@@ -201,11 +201,18 @@
         <!-- Menu rows sit together, without the 10 pt row spacing. -->
         <StackPanel>
           <Button Style="{StaticResource MenuRow}" Click="OnAbout">
-            <TextBlock Text="AirGlass Hakkında" />
+            <TextBlock Text="{DynamicResource S.about}" />
+          </Button>
+          <Button Style="{StaticResource MenuRow}" Click="OnSettings">
+            <Grid>
+              <TextBlock Text="{DynamicResource S.settings}" />
+              <TextBlock Text="Ctrl+," HorizontalAlignment="Right" FontSize="12"
+                         Foreground="{DynamicResource SecondaryTextBrush}" />
+            </Grid>
           </Button>
           <Button Style="{StaticResource MenuRow}" Click="OnQuit">
             <Grid>
-              <TextBlock Text="Çıkış" />
+              <TextBlock Text="{DynamicResource S.quit}" />
               <TextBlock Text="Ctrl+Q" HorizontalAlignment="Right" FontSize="12"
                          Foreground="{DynamicResource SecondaryTextBrush}" />
             </Grid>

@@ -139,9 +139,9 @@ final class ScreenCapturer: NSObject {
             // macOS 14: identify the display by its size.
             let matches = NSScreen.screens.filter { $0.frame.size == filter.contentRect.size }
             if matches.count == 1 { return matches[0].localizedName }
-            return "Ekran"
+            return L("screen")
         }
-        return "Pencere"
+        return L("window")
     }
 
     private static func configuration(for filter: SCContentFilter) -> SCStreamConfiguration {

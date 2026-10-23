@@ -1,7 +1,7 @@
 <Window x:Class="AirGlass.Views.AboutWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="AirGlass Hakkında"
+        Title="{DynamicResource S.about}"
         Width="300" SizeToContent="Height" ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen" ShowInTaskbar="True"
         Background="{DynamicResource PanelBrush}"
@@ -21,7 +21,7 @@
     <StackPanel Margin="0,14,0,0" HorizontalAlignment="Center" TextBlock.FontSize="11">
       <TextBlock HorizontalAlignment="Center">
         <Hyperlink NavigateUri="https://lupusoft.com" RequestNavigate="OnNavigate"
-                   Foreground="{DynamicResource AccentBrush}">Developed by Lupusoft</Hyperlink>
+                   Foreground="{DynamicResource AccentBrush}"><Run Text="{DynamicResource S.developedBy}" /></Hyperlink>
       </TextBlock>
       <TextBlock HorizontalAlignment="Center" Margin="0,2,0,0">
         <Hyperlink NavigateUri="https://github.com/lupusoftco/airglass" RequestNavigate="OnNavigate"
@@ -29,7 +29,7 @@
       </TextBlock>
       <TextBlock HorizontalAlignment="Center" Margin="0,2,0,0">
         <Hyperlink NavigateUri="https://github.com/lupusoftco/airglass/blob/main/LICENSE" RequestNavigate="OnNavigate"
-                   Foreground="{DynamicResource AccentBrush}">MIT License</Hyperlink>
+                   Foreground="{DynamicResource AccentBrush}"><Run Text="{DynamicResource S.license}" /></Hyperlink>
       </TextBlock>
     </StackPanel>
 

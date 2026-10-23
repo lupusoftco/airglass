@@ -55,7 +55,7 @@ final class AppState {
         }
         if captureState == .permissionDenied { return .permissionNeeded }
         if let unavailableReason { return .offline(unavailableReason) }
-        if viewerURL == nil { return .offline("Yerel sunucu başlatılıyor…") }
+        if viewerURL == nil { return .offline(L("offline.starting")) }
         return .waiting
     }
 
@@ -74,8 +74,8 @@ final class AppState {
 
     /// Why there is no QR code, if there isn't one.
     var unavailableReason: String? {
-        if case .failed = serverState { return "Yerel sunucu başlatılamadı" }
-        if localAddress == nil { return "Wi-Fi veya Ethernet bağlantısı yok" }
+        if case .failed = serverState { return L("offline.serverFailed") }
+        if localAddress == nil { return L("offline.noNetwork") }
         return nil
     }
 

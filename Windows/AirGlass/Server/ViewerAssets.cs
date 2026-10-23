@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
-using System.Text;
 
 namespace AirGlass.Server;
 
@@ -34,18 +33,9 @@ public sealed class ViewerAssets
             using var memory = new MemoryStream();
             stream.CopyTo(memory);
             var data = memory.ToArray();
-            if (type.StartsWith("text/")) data = Localize(data);
             _assets[path] = new Asset(data, type);
         }
     }
 
     public Asset? this[string path] => _assets.TryGetValue(path, out var asset) ? asset : null;
-
-    /// <summary>The page tells the viewer to rescan "the QR code on the Mac";
-    /// here it is on the PC.</summary>
-    private static byte[] Localize(byte[] data)
-    {
-        var text = Encoding.UTF8.GetString(data).Replace("Mac'teki", "bilgisayardaki");
-        return Encoding.UTF8.GetBytes(text);
-    }
 }

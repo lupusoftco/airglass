@@ -38,6 +38,7 @@ public partial class App : Application
         }
 
         Theme.Apply(SystemTheme.AppsUseLightTheme);
+        Localizer.Publish();
         SystemTheme.Changed += () => Dispatcher.Invoke(() =>
         {
             Theme.Apply(SystemTheme.AppsUseLightTheme);
@@ -49,6 +50,7 @@ public partial class App : Application
         _trayIcon = new TrayIcon(_state);
         _trayIcon.Clicked += () => _popover.Toggle();
         _trayIcon.AboutRequested += AboutWindow.ShowSingle;
+        _trayIcon.SettingsRequested += SettingsWindow.ShowSingle;
         _trayIcon.QuitRequested += Quit;
         _popover.QuitRequested += Quit;
     }

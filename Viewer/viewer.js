@@ -7,6 +7,81 @@
   const token = decodeURIComponent(location.hash.slice(1).split("&")[0]);
   history.replaceState(null, "", location.pathname);
 
+  // --- Language ------------------------------------------------------------
+  //
+  // The phone's own language if AirGlass has it, otherwise English.
+
+  const TEXTS = {
+    en: {
+      connecting: "Connecting…",
+      fullscreen: "Full screen",
+      showLog: "Show log",
+      endings: {
+        disconnected: ["Disconnected", "To watch again, scan the QR code on the computer again."],
+        rejected: ["Couldn't connect", "This QR code is no longer valid. Scan the current QR code on the computer."],
+        noToken: ["Invalid link", "Scan the QR code on the computer with your phone's camera."],
+        unsupported: ["Can't show the picture", "This browser can't play the stream."],
+      },
+    },
+    tr: {
+      connecting: "Bağlanıyor…",
+      fullscreen: "Tam ekran",
+      showLog: "Günlüğü göster",
+      endings: {
+        disconnected: ["Bağlantı kesildi", "Yeniden izlemek için bilgisayardaki QR kodu yeniden okutun."],
+        rejected: ["Bağlanılamadı", "Bu QR kod artık geçerli değil. Bilgisayardaki güncel QR kodu okutun."],
+        noToken: ["Bağlantı geçersiz", "Bilgisayardaki QR kodu telefonunun kamerasıyla okutun."],
+        unsupported: ["Görüntü açılamadı", "Bu tarayıcı görüntüyü oynatamıyor."],
+      },
+    },
+    "zh-Hans": {
+      connecting: "正在连接…",
+      fullscreen: "全屏",
+      showLog: "显示日志",
+      endings: {
+        disconnected: ["连接已断开", "要再次观看，请重新扫描电脑上的二维码。"],
+        rejected: ["无法连接", "此二维码已失效。请扫描电脑上当前的二维码。"],
+        noToken: ["链接无效", "请用手机相机扫描电脑上的二维码。"],
+        unsupported: ["无法显示画面", "此浏览器无法播放画面。"],
+      },
+    },
+    hi: {
+      connecting: "कनेक्ट हो रहा है…",
+      fullscreen: "पूरी स्क्रीन",
+      showLog: "लॉग दिखाएँ",
+      endings: {
+        disconnected: ["कनेक्शन टूट गया", "फिर से देखने के लिए कंप्यूटर पर दिख रहा QR कोड दोबारा स्कैन करें।"],
+        rejected: ["कनेक्ट नहीं हो सका", "यह QR कोड अब मान्य नहीं है। कंप्यूटर पर दिख रहा नया QR कोड स्कैन करें।"],
+        noToken: ["लिंक अमान्य है", "कंप्यूटर पर दिख रहा QR कोड अपने फ़ोन के कैमरे से स्कैन करें।"],
+        unsupported: ["तस्वीर नहीं दिखाई जा सकी", "यह ब्राउज़र स्ट्रीम नहीं चला सकता।"],
+      },
+    },
+    es: {
+      connecting: "Conectando…",
+      fullscreen: "Pantalla completa",
+      showLog: "Mostrar registro",
+      endings: {
+        disconnected: ["Desconectado", "Para volver a verlo, escanea de nuevo el código QR del ordenador."],
+        rejected: ["No se pudo conectar", "Este código QR ya no es válido. Escanea el código QR actual del ordenador."],
+        noToken: ["Enlace no válido", "Escanea el código QR del ordenador con la cámara del teléfono."],
+        unsupported: ["No se puede mostrar la imagen", "Este navegador no puede reproducir la transmisión."],
+      },
+    },
+  };
+
+  const language =
+    (navigator.languages || [navigator.language || "en"])
+      .map((tag) => tag.toLowerCase())
+      .map((tag) => (tag.startsWith("zh") ? "zh-Hans" : tag.split("-")[0]))
+      .find((code) => TEXTS[code]) || "en";
+  const T = TEXTS[language];
+  document.documentElement.lang = language;
+  document.getElementById("connecting-text").textContent = T.connecting;
+  document.getElementById("ended-title").textContent = T.endings.disconnected[0];
+  document.getElementById("ended-message").textContent = T.endings.disconnected[1];
+  document.getElementById("fullscreen").setAttribute("aria-label", T.fullscreen);
+  document.getElementById("debug-toggle").setAttribute("aria-label", T.showLog);
+
   // --- Diagnostics log ---------------------------------------------------
   //
   // Always collected; the panel starts hidden and shows everything since the
@@ -66,12 +141,7 @@
   const endedTitle = document.getElementById("ended-title");
   const endedMessage = document.getElementById("ended-message");
 
-  const ENDINGS = {
-    disconnected: ["Bağlantı kesildi", "Yeniden izlemek için Mac'teki QR kodu yeniden okutun."],
-    rejected: ["Bağlanılamadı", "Bu QR kod artık geçerli değil. Mac'teki güncel QR kodu okutun."],
-    noToken: ["Bağlantı geçersiz", "Mac'teki QR kodu telefonunun kamerasıyla okutun."],
-    unsupported: ["Görüntü açılamadı", "Bu tarayıcı görüntüyü oynatamıyor."],
-  };
+  const ENDINGS = T.endings;
 
   const showLive = () => {
     connectingEl.hidden = true;
