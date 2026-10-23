@@ -146,9 +146,9 @@ public sealed class AppState : INotifyPropertyChanged
     {
         get
         {
-            if (_serverState is ServerState.Failed) return "Yerel sunucu başlatılamadı";
-            if (_localAddress == null) return "Wi-Fi veya Ethernet bağlantısı yok";
-            if (ViewerUrl == null) return "Yerel sunucu başlatılıyor…";
+            if (_serverState is ServerState.Failed) return Localizer.T("offline.serverFailed");
+            if (_localAddress == null) return Localizer.T("offline.noNetwork");
+            if (ViewerUrl == null) return Localizer.T("offline.starting");
             return null;
         }
     }
@@ -214,7 +214,7 @@ public sealed class AppState : INotifyPropertyChanged
         CaptureMode = mode;
         if (_capturer == null)
         {
-            CaptureState = new CaptureState.Failed("Ekran yakalama bu bilgisayarda kullanılamıyor");
+            CaptureState = new CaptureState.Failed("capture.unavailable");
             return;
         }
         await _capturer.ChooseAsync(mode);

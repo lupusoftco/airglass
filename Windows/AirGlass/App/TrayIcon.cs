@@ -17,9 +17,11 @@ public sealed class TrayIcon : IDisposable
     private readonly AppState _state;
     private readonly Forms.NotifyIcon _icon;
     private Icon? _currentImage;
+    private readonly Forms.ToolStripMenuItem _aboutItem, _settingsItem, _quitItem;
 
     public event Action? Clicked;
     public event Action? AboutRequested;
+    public event Action? SettingsRequested;
     public event Action? QuitRequested;
 
     public TrayIcon(AppState state)
@@ -27,9 +29,13 @@ public sealed class TrayIcon : IDisposable
         _state = state;
 
         var menu = new Forms.ContextMenuStrip();
-        menu.Items.Add("AirGlass Hakkında", null, (_, _) => AboutRequested?.Invoke());
+        _aboutItem = new Forms.ToolStripMenuItem("", null, (_, _) => AboutRequested?.Invoke());
+        _settingsItem = new Forms.ToolStripMenuItem("", null, (_, _) => SettingsRequested?.Invoke());
+        _quitItem = new Forms.ToolStripMenuItem("", null, (_, _) => QuitRequested?.Invoke());
+        menu.Items.Add(_aboutItem);
+        menu.Items.Add(_settingsItem);
         menu.Items.Add(new Forms.ToolStripSeparator());
-        menu.Items.Add("Çıkış", null, (_, _) => QuitRequested?.Invoke());
+        menu.Items.Add(_quitItem);
 
         _icon = new Forms.NotifyIcon { ContextMenuStrip = menu };
         _icon.MouseClick += (_, e) =>
@@ -38,6 +44,7 @@ public sealed class TrayIcon : IDisposable
         };
 
         _state.PropertyChanged += OnStateChanged;
+        Localizer.Changed += Refresh;
         Refresh();
         _icon.Visible = true;
     }
@@ -56,7 +63,10 @@ public sealed class TrayIcon : IDisposable
         _currentImage?.Dispose();
         _currentImage = image;
 
-        _icon.Text = _state.IsStreaming ? "AirGlass – izleniyor" : "AirGlass";
+        _icon.Text = _state.IsStreaming ? Localizer.T("watching") : "AirGlass";
+        _aboutItem.Text = Localizer.T("about");
+        _settingsItem.Text = Localizer.T("settings");
+        _quitItem.Text = Localizer.T("quit");
     }
 
     private void OnStateChanged(object? sender, PropertyChangedEventArgs e)
@@ -67,6 +77,7 @@ public sealed class TrayIcon : IDisposable
     public void Dispose()
     {
         _state.PropertyChanged -= OnStateChanged;
+        Localizer.Changed -= Refresh;
         _icon.Visible = false;
         _icon.Dispose();
         _currentImage?.Dispose();

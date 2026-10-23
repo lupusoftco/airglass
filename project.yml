@@ -29,6 +29,9 @@ targets:
       - path: Viewer
         type: folder
         buildPhase: resources
+      # Interface texts, shared with the Windows app.
+      - path: Localization/Strings.json
+        buildPhase: resources
     dependencies:
       - package: WebRTC
     # Signing and bundle ID live in the xcconfig so they can be overridden

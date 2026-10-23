@@ -27,9 +27,9 @@ enum AboutPanel {
             .paragraphStyle: paragraph,
         ]
         let lines: [(String, URL)] = [
-            ("Developed by Lupusoft", websiteURL),
+            (L("developedBy"), websiteURL),
             ("GitHub", repositoryURL),
-            ("MIT License", licenseURL),
+            (L("license"), licenseURL),
         ]
 
         let text = NSMutableAttributedString()

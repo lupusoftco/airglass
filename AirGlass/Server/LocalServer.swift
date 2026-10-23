@@ -39,7 +39,7 @@ final class LocalServer {
 
     private func listen(portIndex: Int) {
         guard portIndex < Self.candidatePorts.count else {
-            report(.failed("Boş port bulunamadı"))
+            report(.failed("No free port"))
             return
         }
         let port = NWEndpoint.Port(rawValue: Self.candidatePorts[portIndex])!
@@ -254,7 +254,7 @@ final class LocalServer {
 
     /// "iPhone — Safari" from a User-Agent header.
     private static func deviceName(fromUserAgent userAgent: String?) -> String {
-        guard let userAgent else { return "Tarayıcı" }
+        guard let userAgent else { return L("browser") }
 
         let device: String
         if userAgent.contains("iPhone") { device = "iPhone" }
@@ -262,7 +262,7 @@ final class LocalServer {
         else if userAgent.contains("Android") { device = "Android" }
         // iPadOS Safari reports itself as a Mac.
         else if userAgent.contains("Macintosh") { device = "iPad / Mac" }
-        else { device = "Tarayıcı" }
+        else { device = L("browser") }
 
         let browser: String?
         // Order matters: Edge and Chrome also claim to be Safari, Edge also Chrome.

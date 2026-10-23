@@ -23,10 +23,14 @@ struct PopoverView: View {
 
             SeparatorLine()
             VStack(spacing: 0) {
-                MenuRow("AirGlass Hakkında") {
+                MenuRow(L("about")) {
                     AboutPanel.show()
                 }
-                MenuRow("Çıkış", shortcut: "⌘Q") {
+                MenuRow(L("settings"), shortcut: "⌘,") {
+                    SettingsWindow.show()
+                }
+                .keyboardShortcut(",")
+                MenuRow(L("quit"), shortcut: "⌘Q") {
                     NSApplication.shared.terminate(nil)
                 }
                 .keyboardShortcut("q")
@@ -66,16 +70,16 @@ private struct StatusBadge: View {
             switch state {
             case .waiting:
                 hollowDot
-                Text("Bekliyor")
+                Text(L("status.waiting"))
             case .connected:
                 Circle().fill(Theme.green).frame(width: 7, height: 7)
-                Text("Yayında")
+                Text(L("status.live"))
             case .permissionNeeded:
                 Circle().fill(Theme.orange).frame(width: 7, height: 7)
-                Text("İzin gerekli")
+                Text(L("status.permission"))
             case .offline:
                 hollowDot
-                Text("Çevrimdışı")
+                Text(L("status.offline"))
             }
         }
         .font(.system(size: 11, weight: .medium))
@@ -99,7 +103,7 @@ private struct WaitingContent: View {
             VStack(spacing: 10) {
                 QRCodeView(content: url)
                 VStack(spacing: 2) {
-                    Text("Telefonunun kamerasıyla okut")
+                    Text(L("scan"))
                         .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(Theme.text)
                     Text(appState.viewerHost ?? "")
@@ -117,17 +121,17 @@ private struct WaitingContent: View {
             .padding(.horizontal, 4)
 
         SeparatorLine()
-        SectionLabel("Kaynak")
+        SectionLabel(L("source"))
         SourcePicker()
             .padding(.horizontal, 4)
 
         if case .capturing(let source) = appState.captureState {
             SourceRow(source: source)
             HStack(spacing: 6) {
-                ControlButton("Değiştir…", height: 24) {
+                ControlButton(L("change"), height: 24) {
                     appState.chooseSource(appState.captureMode)
                 }
-                ControlButton("Durdur", height: 24, foreground: Theme.red) {
+                ControlButton(L("stop"), height: 24, foreground: Theme.red) {
                     appState.stopCapture()
                 }
             }
@@ -163,18 +167,18 @@ private struct CopyLinkButton: View {
                     Image(systemName: "checkmark")
                         .font(.system(size: 12, weight: .bold))
                         .foregroundStyle(Theme.green)
-                    Text("Kopyalandı")
+                    Text(L("copied"))
                 } else {
                     Image(systemName: "doc.on.doc")
                         .font(.system(size: 12))
-                    Text("Linki kopyala")
+                    Text(L("copyLink"))
                 }
             }
             .controlLabel(height: 28)
         }
         .buttonStyle(ControlButtonStyle())
         .disabled(appState.viewerURL == nil)
-        .accessibilityLabel(didCopy ? "Kopyalandı" : "Linki kopyala")
+        .accessibilityLabel(didCopy ? L("copied") : L("copyLink"))
     }
 }
 
@@ -185,13 +189,13 @@ private struct SourcePicker: View {
 
     var body: some View {
         HStack(spacing: 2) {
-            segment("Tüm ekran", mode: .fullScreen)
-            segment("Pencere seç", mode: .window)
+            segment(L("fullScreen"), mode: .fullScreen)
+            segment(L("pickWindow"), mode: .window)
         }
         .padding(2)
         .background(Theme.segmentTrack, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("Kaynak türü")
+        .accessibilityLabel(L("a11y.sourceType"))
     }
 
     private func segment(_ title: String, mode: CaptureMode) -> some View {
@@ -242,7 +246,7 @@ private struct ConnectedContent: View {
                     .foregroundStyle(Theme.text)
                 HStack(spacing: 5) {
                     Circle().fill(Theme.green).frame(width: 6, height: 6)
-                    Text("Bağlı · \(address)")
+                    Text(L("connected", address))
                 }
                 .font(.system(size: 11))
                 .foregroundStyle(Theme.secondaryText)
@@ -253,7 +257,7 @@ private struct ConnectedContent: View {
         .background(Theme.card, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
         .padding(.horizontal, 4)
 
-        SectionLabel("Yayınlanan")
+        SectionLabel(L("sharing"))
         if case .capturing(let source) = appState.captureState {
             SourceRow(source: source)
         } else {
@@ -261,7 +265,7 @@ private struct ConnectedContent: View {
                 .padding(.horizontal, 4)
         }
 
-        ControlButton("Bağlantıyı kes", height: 32, foreground: .white, background: Theme.red) {
+        ControlButton(L("disconnect"), height: 32, foreground: .white, background: Theme.red) {
             appState.disconnect()
         }
         .padding(EdgeInsets(top: 2, leading: 4, bottom: 0, trailing: 4))
@@ -280,10 +284,10 @@ private struct PermissionContent: View {
                 .foregroundStyle(Theme.orange)
                 .frame(width: 48, height: 48)
                 .background(Theme.orangeFill, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            Text("Ekran Kaydı izni gerekli")
+            Text(L("permission.title"))
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(Theme.text)
-            Text("AirGlass'ın ekranını yansıtabilmesi için Sistem Ayarları › Gizlilik ve Güvenlik › Ekran ve Sistem Sesi Kaydı bölümünden izin ver.")
+            Text(L("permission.body"))
                 .font(.system(size: 12))
                 .lineSpacing(2)
                 .foregroundStyle(Theme.secondaryText)
@@ -293,12 +297,12 @@ private struct PermissionContent: View {
         .frame(maxWidth: .infinity)
         .padding(EdgeInsets(top: 6, leading: 8, bottom: 0, trailing: 8))
 
-        ControlButton("Sistem Ayarları'nı aç", height: 32, foreground: .white, background: Theme.accent) {
+        ControlButton(L("permission.open"), height: 32, foreground: .white, background: Theme.accent) {
             appState.openScreenRecordingSettings()
         }
         .padding(EdgeInsets(top: 2, leading: 4, bottom: 0, trailing: 4))
 
-        Text("İzni verdikten sonra AirGlass yeniden başlatılabilir.")
+        Text(L("permission.note"))
             .font(.system(size: 11))
             .lineSpacing(1)
             .foregroundStyle(Theme.secondaryText)
@@ -333,7 +337,7 @@ private struct OfflineContent: View {
                     .strokeBorder(Theme.separator, style: StrokeStyle(lineWidth: 1.5, dash: [4, 3]))
             )
 
-            Text("Mac ve telefon aynı ağa bağlandığında QR kod burada görünür.")
+            Text(L("offline.hint.mac"))
                 .font(.system(size: 11))
                 .lineSpacing(1)
                 .foregroundStyle(Theme.secondaryText)
@@ -367,7 +371,7 @@ private struct SourceRow: View {
                     .lineLimit(1)
                     .truncationMode(.tail)
                     .help(source.name)
-                Text(source.isWindow ? "Pencere" : "Tüm ekran")
+                Text(source.isWindow ? L("window") : L("fullScreen"))
                     .font(.system(size: 11))
                     .foregroundStyle(Theme.secondaryText)
             }

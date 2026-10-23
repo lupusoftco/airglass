@@ -110,4 +110,78 @@
     <Setter Property="Margin" Value="4,2,4,12" />
   </Style>
 
+
+  <!-- The language dropdown in Settings: a rounded control like the popover's
+       buttons, with a menu-style list. -->
+  <Style x:Key="DropdownItem" TargetType="ComboBoxItem">
+    <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="Padding" Value="8,0" />
+    <Setter Property="Height" Value="26" />
+    <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ComboBoxItem">
+          <Border x:Name="Root" Background="Transparent" CornerRadius="5" Padding="{TemplateBinding Padding}">
+            <ContentPresenter VerticalAlignment="Center" />
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsHighlighted" Value="True">
+              <Setter TargetName="Root" Property="Background" Value="{DynamicResource MenuHoverBrush}" />
+            </Trigger>
+            <Trigger Property="IsSelected" Value="True">
+              <Setter Property="FontWeight" Value="SemiBold" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <Style x:Key="Dropdown" TargetType="ComboBox">
+    <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+    <Setter Property="FontFamily" Value="{DynamicResource UIFont}" />
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="Height" Value="28" />
+    <Setter Property="ItemContainerStyle" Value="{StaticResource DropdownItem}" />
+    <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ComboBox">
+          <Grid>
+            <ToggleButton Focusable="False" ClickMode="Press"
+                          IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+              <ToggleButton.Template>
+                <ControlTemplate TargetType="ToggleButton">
+                  <Border x:Name="Root" Background="{DynamicResource ControlBrush}" CornerRadius="8" Padding="10,0">
+                    <Grid>
+                      <ContentPresenter Content="{Binding SelectionBoxItem, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                        ContentTemplate="{Binding SelectionBoxItemTemplate, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                        TextBlock.FontWeight="Medium" VerticalAlignment="Center" Margin="0,0,18,0" />
+                      <TextBlock Text="&#xE70D;" FontFamily="{DynamicResource IconFont}" FontSize="10"
+                                 HorizontalAlignment="Right" VerticalAlignment="Center"
+                                 Foreground="{DynamicResource SecondaryTextBrush}" />
+                    </Grid>
+                  </Border>
+                  <ControlTemplate.Triggers>
+                    <Trigger Property="IsPressed" Value="True">
+                      <Setter TargetName="Root" Property="Opacity" Value="0.7" />
+                    </Trigger>
+                  </ControlTemplate.Triggers>
+                </ControlTemplate>
+              </ToggleButton.Template>
+            </ToggleButton>
+            <Popup IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom" VerticalOffset="4"
+                   AllowsTransparency="True" Focusable="False" PopupAnimation="Fade">
+              <Border MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
+                      Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource PanelBorderBrush}"
+                      BorderThickness="0.5" CornerRadius="8" Padding="4">
+                <ItemsPresenter />
+              </Border>
+            </Popup>
+          </Grid>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
 </ResourceDictionary>

@@ -36,6 +36,9 @@
   <ItemGroup>
     <EmbeddedResource Include="..\..\Viewer\*" LogicalName="Viewer/%(Filename)%(Extension)"
                       Link="Viewer\%(Filename)%(Extension)" />
+    <!-- Interface texts, shared with the macOS app. -->
+    <EmbeddedResource Include="..\..\Localization\Strings.json" LogicalName="Localization/Strings.json"
+                      Link="Localization\Strings.json" />
   </ItemGroup>
 
   <ItemGroup>

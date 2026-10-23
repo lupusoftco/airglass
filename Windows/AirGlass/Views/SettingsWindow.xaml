@@ -1,0 +1,24 @@
+<Window x:Class="AirGlass.Views.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="{DynamicResource S.settings.title}"
+        Width="320" SizeToContent="Height" ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen" ShowInTaskbar="True"
+        Background="{DynamicResource PanelBrush}"
+        UseLayoutRounding="True" TextOptions.TextFormattingMode="Display"
+        FontFamily="{DynamicResource UIFont}">
+
+  <!-- Language, for now: label on the left, dropdown on the right, like the
+       macOS Settings window. -->
+  <Grid Margin="20">
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="Auto" />
+      <ColumnDefinition Width="*" />
+    </Grid.ColumnDefinitions>
+    <TextBlock Text="{DynamicResource S.settings.language}" VerticalAlignment="Center" Margin="0,0,16,0"
+               FontSize="13" Foreground="{DynamicResource TextBrush}" />
+    <ComboBox x:Name="LanguageBox" Grid.Column="1" Style="{StaticResource Dropdown}"
+              DisplayMemberPath="Name" SelectedValuePath="Code"
+              SelectionChanged="OnLanguageChanged" />
+  </Grid>
+</Window>

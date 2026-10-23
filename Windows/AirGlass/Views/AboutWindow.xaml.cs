@@ -4,10 +4,11 @@ using System.Reflection;
 using System.Windows;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
+using AirGlass.Support;
 
 namespace AirGlass.Views;
 
-/// <summary>The "AirGlass Hakkında" window (one at a time).</summary>
+/// <summary>The About AirGlass window (one at a time).</summary>
 public partial class AboutWindow : Window
 {
     private static AboutWindow? _current;
@@ -16,8 +17,12 @@ public partial class AboutWindow : Window
     {
         InitializeComponent();
         AppIcon.Source = BitmapFrame.Create(new Uri("pack://application:,,,/Assets/AirGlass.ico"));
-        VersionText.Text = $"Sürüm {AppVersion}";
+        ShowVersion();
+        Localizer.Changed += ShowVersion;
+        Closed += (_, _) => Localizer.Changed -= ShowVersion;
     }
+
+    private void ShowVersion() => VersionText.Text = Localizer.T("version", AppVersion);
 
     /// <summary>"0.2.0", from the assembly version set in the project file.</summary>
     public static string AppVersion
