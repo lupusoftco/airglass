@@ -21,7 +21,7 @@
     <ApplicationIcon>Assets\AirGlass.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
 
-    <Version>0.2.0</Version>
+    <Version>0.3.0</Version>
     <Product>AirGlass</Product>
     <Company>Lupusoft</Company>
     <Copyright>© 2026 Lupusoft</Copyright>
